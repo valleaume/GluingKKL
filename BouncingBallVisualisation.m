@@ -48,14 +48,20 @@ x_pred = T_inv.predict(z);
 figure(6)
 clf
 plot(sol_test.x(:,1), sol_test.x(:,2))
+title("Phase plot ground truth")
 plot(x_pred(:,1), x_pred(:,2))
+title("Phase plot observer")
 plot(sol_test.t(:), sol_test.x(:,2))
+title("velocity")
 hold on
 plot(sol_test.t(:), x_pred(:,2))
+legend('$x_2$', '$\hat{x}_2$', 'interpreter', 'latex')
 hold off 
 plot(sol_test.t(:), sol_test.x(:,1))
 hold on
 plot(sol_test.t(:), x_pred(:,1))
+title("position")
+legend("$x_1$", "$\\hat{x}_1$")
 hold off
 
 
@@ -84,12 +90,18 @@ x_pred_noise = T_inv.predict(z_noise);
 figure(7)
 clf
 plot(sol_test_noise.x(:,1), sol_test_noise.x(:,2))
+title("Phase plot ground truth")
 plot(x_pred_noise(:,1), x_pred_noise(:,2))
+title("Phase plot observer")
 plot(sol_test_noise.t(:), sol_test_noise.x(:,2))
 hold on
+title("velocity")
 plot(sol_test_noise.t(:), x_pred_noise(:,2))
+legend("$x_2$", "$\\hat{x}_2$")
 hold off 
 plot(sol_test_noise.t(:), sol_test_noise.x(:,1))
 hold on
 plot(sol_test_noise.t(:), x_pred_noise(:,1))
+title("position")
+legend("$x_1$", "$\hat{x}_1$")
 hold off

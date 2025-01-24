@@ -53,9 +53,9 @@ nTrees = 100; % number of tree in the forest
 
 
 % Train the forest
-randomForest = TreeBagger(nTrees, XTrain, YTrain, 'Method', 'classification')
+randomForest = TreeBagger(nTrees, XTrain, YTrain, 'Method', 'classification');
 
-svmModel = fitcsvm(XTrain, YTrain, 'KernelFunction', 'rbf', 'Standardize', true)
+svmModel = fitcsvm(XTrain, YTrain, 'KernelFunction', 'rbf', 'Standardize', true);
 
 
 %% Test
@@ -198,6 +198,7 @@ fprintf('RMSE : %.4f\n', rmse);
 
 %% Save models
 
+today = string(datetime("today"));
 directory = 'ObserverModels/';
 models_name = strcat(directory, 'bouncing-ball-predictor-', today, '.mat');
 save(models_name, 'mdl_b', 'mdl_b', "mu_b", "sigma_b", "mdl_a", "mu_a", "sigma_a", "svmModel", "randomForest", 'A', 'B');

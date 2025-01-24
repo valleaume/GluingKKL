@@ -79,7 +79,8 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
             %   array. They can be labelled as before (label = 0) or after
             %   (label = 1) their closest jump. Sampling is started after
             %   T_take time so that the transitory period does not affect
-            %   much the points. 
+            %   much the points. In order to have a better training set for 
+            %   the regressors a margin of error is added.
             %   INPUTS : 
             %       - InitConditions : (M, n_x + n_z) array, with M >= n_run
             %       - T_take : Time after which the transitory is finished
@@ -87,7 +88,10 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
             %       - points_per_run : Number of points randomly sampled each run
             %       - n_run : Number of run
             %   OUTPUT :
-            %       DataSet : (n_run, points_per_run, n_x + n_z + 3) array
+            %      DataSet : (n_run, points_per_run, n_x + n_z + 3) array
+            %       - n_x + n_z + 1 column : after jumps label for the classifier
+            %       - n_x + n_z + 2 column : before jumps label for the regressor (with margin)
+            %       - n_x + n_z + 3 column : after jumps label for the regressor (with margin)
 
             
             assert(T_take < T_max, "T_take is greater than T_max")
@@ -139,13 +143,10 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
                 end
                 
                 % Redefine tmax_ind to be exactly the last point of the last complete jump
-                %disp(sol.jump_count);
                 tmax_ind = find(data_t == sol.jump_times(sol.jump_count), 1, 'last') - 1;
-                %disp({data_j(tmax_ind), data_j(tmax_ind-1)});
                 len_t = tmax_ind - tmin_ind + 1;
 
                 j_int = data_j(tmin_ind);  % j value of the first complete jump after T_take
-                %j_end = data_j(tmax_ind);  % j value of the last complete jump  
                 after_jumps_label = nan(last_index, 1);
                 to_train_after = zeros(last_index, 1);
                 to_train_before = zeros(last_index, 1);
@@ -156,19 +157,16 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
                 middle_time_minus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 - train_margin);
                 DataSet_index = randsample(seed, tmin_ind:tmax_ind, points_per_run, points_per_run>len_t);
                 DataSet_index = sort(DataSet_index);
-                tab = tmin_ind:tmax_ind;
                 for ind_old = 1:points_per_run
                     ind = DataSet_index(ind_old);
                     if data_j(ind)>current_J
                           current_J = data_j(ind);
-                          %disp(current_J);
                           middle_time = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))/2;
                           middle_time_plus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 + train_margin);
                           middle_time_minus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 - train_margin);
               
                           if middle_time == data_t(ind)
                               % If there is no flow, cannot label the data
-                              disp('hum')
                               continue
                           end
                     end
@@ -190,19 +188,15 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
                 
                 
                 DataSet(i,:,:) = cat(2, data_x(DataSet_index,:), after_jumps_label(DataSet_index), to_train_before(DataSet_index), to_train_after(DataSet_index));
-                %disp(DataSet_index);
-                % disp(after_jumps_label);
-                % disp(after_jumps_label(DataSet_index));
                 
             end
             DataSet = reshape(permute(DataSet,[3, 1, 2]), this.state_dimension + 3, []);
-            %DataSet = {after_jumps_label, sol};% debug
         end
        
 
             function DataSet = generateDataTest(this, InitConditions, T_take, T_max, points_per_run, n_run)
-                %GENERATE DATA Method that generate a dataset of points and 
-                %label them. 
+                %GENERATE DATATest Method that generate a dataset of points and 
+                %label them, depreciated (only one label and not 3)
                 %   The points are randomly sampled alongside trajectories
                 %   of the augmented system initialized thanks to the input
                 %   array. They can be labelled as before (label = 0) or after
@@ -216,8 +210,8 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
                 %       - points_per_run : Number of points randomly sampled each run
                 %       - n_run : Number of run
                 %   OUTPUT :
-                %       DataSet : (n_run, points_per_run, n_x + n_z +1) array
-    
+                %       DataSet : (n_run, points_per_run, n_x + n_z + 1) array
+                %       - n_x + n_z + 1 column : after jumps label    
                 
                 assert(T_take < T_max, "T_take is greater than T_max")
                 assert(size(InitConditions, 2) >= n_run, "Not enough initial condition for required number of runs")
@@ -275,30 +269,13 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
                         after_jumps_label((data_t >= start_jump_time) & (data_t < middle_time) & (data_j == j)) = 1;
                         after_jumps_label((data_t <= end_jump_time) & (data_t >= middle_time) & (data_j == j)) = 0;
                     end
-                    DataSet_index = sort(randsample(seed, tmin_ind:tmax_ind, points_per_run, points_per_run > len_t));  % sort only for comparison purposes
+                    DataSet_index = sort(randsample(seed, tmin_ind:tmax_ind, points_per_run, points_per_run > len_t));  % sort only for comparison purposes with generate data
                     
                     DataSet(i,:,:) = cat(2, data_x(DataSet_index, :), after_jumps_label(DataSet_index));
-                    %disp(sort(DataSet_index));
-                    % disp(after_jumps_label);
-                    % disp(after_jumps_label(DataSet_index));
                     
                 end
                 DataSet = reshape(permute(DataSet,[3, 1, 2]), this.state_dimension + 1, []);
-                %DataSet = {after_jumps_label, sol}; %debug
             end
-    end 
-%data{1}(~isnan(data{1})) == data_test{1}(~isnan(data{1}))
-% 
-% figure(8)
-% clf
-% scatter(data_test{2}.t(data_test{1} == 0), data_test{2}.x(data_test{1} == 0,1), 8, 'red')
-% hold on
-% scatter(data_test{2}.t(data_test{1} == 1), data_test{2}.x(data_test{1} == 1,1), 8, 'blue')
-% hold off
-% scatter(data{2}.t(data{1} == 0), data{2}.x(data{1} == 0,1), 8, 'red')
-% hold on
-% scatter(data{2}.t(data{1} == 1), data{2}.x(data{1} == 1,1), 8, 'blue')
-% hold off
-% plot(data_test{1} - data{1})
+    end
 end
    
