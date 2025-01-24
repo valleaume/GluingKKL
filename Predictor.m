@@ -23,7 +23,7 @@ classdef Predictor
             %   mdl_a is the regressor trained on the points after jumps.
             %   mu_a and sigma_a are the associated normalization coefficients.
               
-            obj.classifier = models.svmModel;
+            obj.classifier = models.randomForest;
             obj.mdl_b = models.mdl_b;
             obj.mdl_a = models.mdl_a;
             obj.sigma_a = models.sigma_a;
@@ -38,7 +38,7 @@ classdef Predictor
             %   apply it. 
 
             % Classify z points
-            after_jumps_label = predict(obj.classifier, z);
+            after_jumps_label = str2double(predict(obj.classifier, z));
 
             % Calculate results of both networks
             x_pred_before_jump = predict(obj.mdl_b, (z - obj.mu_b) ./ obj.sigma_b);
