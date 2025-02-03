@@ -1,6 +1,7 @@
 %% Load dataset
 
-data = load("Data/raw-bouncing-ball-23-Jan-2025.mat");
+data_obj = load("Data/raw-bouncing-ball-23-Jan-2025.mat");
+data = data_obj.data_3;
 
 %% Plot the 2 classes of points
 

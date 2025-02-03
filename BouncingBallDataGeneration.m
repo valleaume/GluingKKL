@@ -82,11 +82,10 @@ hpb.title('Ball')...
 Init_conditions = aug_sys.generateRandomConditions([0, 5; -12, 12], 400);
 
 % Generate the dataset
-data = aug_sys.generateData(Init_conditions, 0.7, 20, 200, 400, 0.001);
-%data_3 = aug_sys.generateData(Init_conditions, 0.7, 20, 200, 400);
+data = aug_sys.generateData(Init_conditions, 7, 20, 200, 400, 0.001);
 
 %% Save dataset
 today = string(datetime("today"));
 datas_filename = strcat('Data/raw-bouncing-ball-', today);
-data_3 = data; %save dataas "data_3" for compatibility purposes
+data_3 = data;   %save datas as "data_3" for compatibility purposes
 save(datas_filename, "data_3", "A", "B")

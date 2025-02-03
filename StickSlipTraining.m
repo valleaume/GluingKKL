@@ -32,8 +32,8 @@ hold on
 scatter(data_3(1, data_3(aug_sys.state_dimension + 1,:)==0), data_3(2, data_3(aug_sys.state_dimension + 1,:)==0), 8, 'b')
 xlabel('x_1')
 ylabel('x_2')
-scatter(Init_conditions(1,:), Init_conditions(2,:), 4)
-legend('After Jump', 'Before Jump', 'Init Conditions' )
+
+legend('After Jump', 'Before Jump')
 
 % Plot in the z space
 figure(4)
