@@ -80,13 +80,16 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
             %   (label = 1) their closest jump. Sampling is started after
             %   T_take time so that the transitory period does not affect
             %   much the points. In order to have a better training set for 
-            %   the regressors a margin of error is added.
+            %   the regressors a margin of error is added which results in 2 more 
+            %   labels, one for each regressor.
             %   INPUTS : 
             %       - InitConditions : (M, n_x + n_z) array, with M >= n_run
-            %       - T_take : Time after which the transitory is finished
+            %       - T_take : Time after which the transitory period is finished
             %       - T_max : End time for simulations
             %       - points_per_run : Number of points randomly sampled each run
             %       - n_run : Number of run
+            %       - max_dt_steps : maximum length of a time step of the integration scheme, default 0.01
+            %       - train_margin : margin of points added for regressor training, default 0.1
             %   OUTPUT :
             %      DataSet : (n_run, points_per_run, n_x + n_z + 3) array
             %       - n_x + n_z + 1 column : after jumps label for the classifier
@@ -105,6 +108,7 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
                 max_dt_step = 0.01;
             end
 
+
             config = HybridSolverConfig('silent', 'AbsTol', 1e-3, 'RelTol', 1e-7, 'MaxStep', max_dt_step);
 
             J_max = 1000; 
@@ -113,9 +117,9 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
             jspan = [J_init, J_max]; % Jump Span, make it very large to set the stopping condition to be a certain time, not a certain number of jumps (except if Zeno)
             
             
-            DataSet = nan(n_run, points_per_run, this.state_dimension + 3);
+            DataSet = nan(n_run, points_per_run, this.state_dimension + 3); % default value is nan  if labellization was impossible
             AugmentedInitConditions = cat(1, InitConditions(:, 1:n_run), zeros(this.nz, n_run));
-            seed = RandStream('mlfg6331_64');
+            seed = RandStream('mlfg6331_64'); %set seed for reproduction purposes
             
             for i = 1:n_run
                 AugmentedIc = AugmentedInitConditions(:, i); 
@@ -151,37 +155,50 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
                 to_train_after = zeros(last_index, 1);
                 to_train_before = zeros(last_index, 1);
                 
+                % Initialize the loop internal variables with the first value of J
                 current_J = j_int;
                 middle_time = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))/2;
                 middle_time_plus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 + train_margin);
                 middle_time_minus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 - train_margin);
-                DataSet_index = randsample(seed, tmin_ind:tmax_ind, points_per_run, points_per_run>len_t);
+
+                if points_per_run>len_t 
+                    warning('%s points are sampled but only %s points are present between %s s and %s s : repetitions are exeptionnaly authorized. Consider reducing max_dt_steps or augmenting T_max', points_per_run, len_t, T_take, T_max )
+                end
+
+                DataSet_index = randsample(seed, tmin_ind:tmax_ind, points_per_run, points_per_run>len_t); % sample randomly the points
                 DataSet_index = sort(DataSet_index);
+
                 for ind_old = 1:points_per_run
                     ind = DataSet_index(ind_old);
                     if data_j(ind)>current_J
-                          current_J = data_j(ind);
-                          middle_time = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))/2;
-                          middle_time_plus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 + train_margin);
-                          middle_time_minus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 - train_margin);
-              
-                          if middle_time == data_t(ind)
-                              % If there is no flow, cannot label the data
-                              continue
-                          end
+
+                        if middle_time == data_t(ind)
+                            % If there is no flow, cannot label the data
+                            continue
+                        end
+
+                        % if j changed, update the middle time of the flow period
+                        current_J = data_j(ind);
+                        middle_time = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))/2;
+                        middle_time_plus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 + train_margin);
+                        middle_time_minus_margin = sol.jump_times(current_J - J_init) + (sol.jump_times(current_J - J_init + 1) - sol.jump_times(current_J - J_init))*(1/2 - train_margin);
+
                     end
 
-                    if data_t(ind)<middle_time
+                    if data_t(ind) < middle_time
+                        % label for the classifier : 1 after the closest jump, 0 before the closest jump
                         after_jumps_label(ind) = 1;
                     else
                         after_jumps_label(ind) = 0;
                     end
 
-                    if data_t(ind)<=middle_time_plus_margin
+                    if data_t(ind) <= middle_time_plus_margin
+                        % label for the after jump regressor : after the closest jump or close to the middle time, let nan for the others
                         to_train_after(ind) = 1;
                     end
 
-                    if data_t(ind)>=middle_time_minus_margin
+                    if data_t(ind) >= middle_time_minus_margin
+                        % label for the before jump regressor : before the closest jump or close to the middle time, let nan for the others
                         to_train_before(ind) = 1;
                     end 
                 end
@@ -190,7 +207,7 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
                 DataSet(i,:,:) = cat(2, data_x(DataSet_index,:), after_jumps_label(DataSet_index), to_train_before(DataSet_index), to_train_after(DataSet_index));
                 
             end
-            DataSet = reshape(permute(DataSet,[3, 1, 2]), this.state_dimension + 3, []);
+            DataSet = reshape(permute(DataSet,[3, 1, 2]), this.state_dimension + 3, []); % replace both axis (points_per_run, n_run) into one single axis of size  (points_per_run * n_run)
         end
        
 

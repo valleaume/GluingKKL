@@ -6,23 +6,31 @@
 % Create a StickSlip object.
 sys = StickSlipSystemClass();
 
-% Define the observation function y = h(x)
-h = @(x, t) (x(1));
+
+%%%%%%%% CAN BE CHANGED %%%%%%%%
+sig = 0.00;                     % Amplitude of unmodeled perturbation, default :  no perturbation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Define the observation function y = h(x, t) with an unmodeled sinusoidal perturbation 
+h = @(x, t) (x(1) + sig*sin(t));
 
 % Create the associated BouncingBall object
 obs_sys = ObservedHybridSystem(sys, 1, h);
 
-% Define the AugmentedSystem
 
+% load the z dynamic
 data = load("Data/raw-stick-slip.mat");
 A = data.A;
 B = data.B;
+
+% Define the AugmentedSystem [x, z] and the z dynamic
 aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 
 %% Generate a ground truth x signal and its corresponding z signal
 
 % Initial condition
-X1 = [0; sys.v_t; 0.7; 0.1; 0; 0; 0; 0; 0; 0; 0];
+X0 = [0; sys.v_t; 0.7; 0.1; 0]; % start from a sticking state (q = 0, v = v_t), with unexcited spring (x = 0), mu_s = 0.7, mu_d = 0.1 
+Z0 = [ 0; 0; 0; 0; 0; 0];
 
 % Time spans
 tspan = [0, 26];
@@ -32,20 +40,35 @@ jspan = [0, 28];
 config = HybridSolverConfig('AbsTol', 1e-3, 'RelTol', 1e-7);
 
 % Compute solutions
-sol_test = aug_sys.solve(X1, tspan, jspan, config);
+sol_test = aug_sys.solve([X0; Z0], tspan, jspan, config);
 
+% Extract z and y from simulation result
 y = sol_test.x(:,1);
 z = sol_test.x(:, aug_sys.nx + 1 : aug_sys.nx + aug_sys.nz);
 
+% Plot z signal
+
+close all; % close all previously opened figures
+
+figure(1);
+clf;
+plot(sol_test.t, z);
+
+title("Z signal");
+legend("Ground Truth", "Observer");
 
 %% Reconstruct the observer result
+
 pretrained_model = "ObserverModels/stick-slip-predictor.mat";
 models = load(pretrained_model);
-T_inv = Predictor(models);
+
+% Use the T_InvPredictor utility to easily reconstruct x from z
+T_inv = T_InvPredictor(models);
 x_pred = T_inv.predict(z);
 
 %% Plot observer result and ground truth
-figure(7);
+
+figure(1);
 clf;
 plot(sol_test.x(:,1), sol_test.x(:,2));
 hold on;
@@ -53,15 +76,7 @@ plot(x_pred(:,1), x_pred(:,2));
 title("Phase plot");
 legend("Ground Truth", "Observer");
 
-figure(8);
-clf;
-plot(sol_test.t(:), sol_test.x(:,2));
-hold on;
-plot(sol_test.t(:), x_pred(:,2));
-title("velocity");
-legend('$ x_2 $', '$\hat{x_2}$', 'Interpreter', 'latex');
-
-figure(9);
+figure(2);
 clf;
 plot(sol_test.t(:), sol_test.x(:,1));
 hold on;
@@ -69,49 +84,27 @@ plot(sol_test.t(:), x_pred(:,1));
 title("position");
 legend("$x_1$", "$\hat{x_1}$",'Interpreter', 'latex');
 
+figure(3);
+clf;
+plot(sol_test.t(:), sol_test.x(:,2));
+hold on;
+plot(sol_test.t(:), x_pred(:,2));
+title("velocity");
+legend('$ x_2 $', '$\hat{x_2}$', 'Interpreter', 'latex');
 
-%% Noisy data
-
-sig = 0.01;
-
-% Define the observation function y = h(x) + noise
-h_noise = @(x, t) (x(1) + sig*sin(t));
-
-% Create the associated BouncingBall object
-obs_sys_noise = ObservedHybridSystem(sys, 1, h_noise);
-
-aug_sys_noise = AugmentedSystem(obs_sys_noise, 6, A, B);
-
-sol_test_noise = aug_sys_noise.solve(X1, tspan, jspan, config);
-
-
-z_noise = sol_test_noise.x(:,aug_sys_noise.nx+1:aug_sys_noise.nx + aug_sys_noise.nz);
-
-%% Reconstruct the observer result
-
-x_pred_noise = T_inv.predict(z_noise);
-
-%% Plot observer result and ground truth
 figure(4);
 clf;
-plot(sol_test_noise.x(:,1), sol_test_noise.x(:,2));
+plot(sol_test.t(:), sol_test.x(:,3));
 hold on;
-plot(x_pred_noise(:,1), x_pred_noise(:,2));
-title("Phase plot, with noise");
-legend("Ground Truth", "Observer");
+plot(sol_test.t(:), x_pred(:,3));
+title("Static friction coefficient");
+legend('$ \mu_s $', '$\hat{\mu_s}$', 'Interpreter', 'latex');
 
 figure(5);
 clf;
-plot(sol_test_noise.t(:), sol_test_noise.x(:,2));
+plot(sol_test.t(:), sol_test.x(:,4));
 hold on;
-plot(sol_test_noise.t(:), x_pred_noise(:,2));
-title("velocity, with noise");
-legend("$x_2$", "$\hat{x_2}$", 'Interpreter', 'latex');
+plot(sol_test.t(:), x_pred(:,4));
+title("Dynamic friction coefficient");
+legend('$ \mu_d $', '$\hat{\mu_d}$', 'Interpreter', 'latex');
 
-figure(6);
-clf;
-plot(sol_test_noise.t(:), sol_test_noise.x(:,1));
-hold on;
-plot(sol_test_noise.t(:), x_pred_noise(:,1));
-title("position, with noise");
-legend("$x_1$", "$\hat{x_1}$", 'Interpreter', 'latex');
