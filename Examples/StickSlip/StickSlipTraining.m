@@ -4,7 +4,7 @@ data = load("Data/raw-stick-slip.mat");
 data_3 = data.data_3;
 
 %% Create a StickSlip object.
-sys = StickSlip();
+sys = StickSlipSystemClass();
 
 
 %% Create an observed system

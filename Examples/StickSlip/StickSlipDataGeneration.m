@@ -1,16 +1,16 @@
-%% Example: Bouncing Ball using HybridSystem
+%% Example: StickSlip using HybridSystem
 % In this example, we illustrate the Gluing methodology. We create and solve
-% a BouncingBall suject to friction using the HybridSystem class.
+% a StickSlip object using the adequate HybridSystem class.
+% This system is the modelization of an harmonic oscillator subject to coulomb friction law.
 % We then generate a dataset it using the AugmentedSystem class. Using the
 % splitting methodology we train 2 neural networks and a classifier to
 % learn T_inv. We then illustrate the observer.
 % For a full description of this example, find the following page in the 
 % HyEQ Toolbox Help: Hybrid Equations MATLAB Library > Creating and Simulating Hybrid Systems
 
-%% Create a BouncingBall object.
+%% Create a StickSlip object.
+sys = StickSlipSystemClass();
 
-sys = BouncingBallFriction();
-sys.mu = 2; % Additional velocity at each impact
 
 %% Create an observed system
 
@@ -21,15 +21,18 @@ h = @(x, t) (x(1));
 obs_sys = ObservedHybridSystem(sys, 1, h);
 
 % Define the AugmentedSystem
-A = diag([-1, -2, -3]);
-B = [1; 1; 1];
-aug_sys = AugmentedSystem(obs_sys, 3, A, B);
+eps = 0.1;
+w_1 = 2*pi/3;
+w_2 = 2/4*pi;
+A = [-eps, -w_1, 0, 0, 0, 0 ;  w_1, -eps, 0, 0, 0, 0; 0, 0, -eps, -w_2, 0, 0; 0, 0, w_2, -eps, 0, 0; 0, 0, 0, 0, -3, 0; 0, 0, 0, 0, 0, -5];
+B = [1; 0; 1; 0; 1; 1];
+aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 
 
 %% Compute a solution
 
 % Initial condition for the initial system
-x0 =  [4; 0];
+x0 =  [0; sys.v_t; 0.45; 0.1; -1];
 
 % Time spans
 tspan = [0, 100];
@@ -54,7 +57,7 @@ hpb.title('Ball')...
 %% Compute an augmented solution
 
 % Initial condition for augmented system
-X0 =  [4; 1; 0; 0; 0];
+X0 =  [0; sys.v_t; 0.45; 0.1 ; 0; 0; 0; 0; 0; 0; 0];
 
 % Time spans
 tspan = [0, 16];
@@ -79,14 +82,17 @@ hpb.title('Ball')...
 %% Generate a labeled dataset of (x,z) pair
 
 % Random initial conditions sampled uniformly inside a specific rectangle
-Init_conditions = aug_sys.generateRandomConditions([0, 5; -12, 12], 400);
+Init_conditions = aug_sys.generateRandomConditions([-1, 1 ; -3, 2; 0.05, 1; 0.05, 1; -1, 1], 30000); % take more points to account for some points being
+Init_conditions = Init_conditions(:, Init_conditions(3, :) > Init_conditions(4, :)); % We must have \mu_s > \mu_d
+Init_conditions(5,:) = 1-2*(Init_conditions(2,:)<sys.v_t); % overwrite the adapted q
 
 % Generate the dataset
 t_take = 5/min(abs(real(eig(A))));
-data = aug_sys.generateData(Init_conditions, t_take, t_take + 15, 200, 400, 0.001);
+data_3 = aug_sys.generateData(Init_conditions, t_take, t_take + 20, 200, 1000);
+fprintf( ' Proportion of q = 1 data points : %.2f%%', nnz(data_3(5,:)==1)/nnz(~isnan(data_3(aug_sys.state_dimension + 1,:))) );  % q=1 outlier?
+
 
 %% Save dataset
 today = string(datetime("today"));
-datas_filename = strcat('Data/raw-bouncing-ball-', today);
-data_3 = data;   %save datas as "data_3" for compatibility purposes
+datas_filename = strcat('Data/raw-stick-slip-', today);
 save(datas_filename, "data_3", "A", "B")

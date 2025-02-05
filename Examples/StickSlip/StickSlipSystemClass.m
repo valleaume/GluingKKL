@@ -1,4 +1,4 @@
-classdef StickSlip < HybridSystem
+classdef StickSlipSystemClass < HybridSystem
     % A bouncing ball modeled as a HybridSystem subclass.
     % Define variable properties that can be modified.
     properties
@@ -21,7 +21,7 @@ classdef StickSlip < HybridSystem
         q_index = 5;
     end
     methods 
-        function this = StickSlip()
+        function this = StickSlipSystemClass()
             % Constructor for instances of the BouncingBall class.
             % Call the constructor for the HybridSystem superclass and
             % pass it the state dimension. This is not strictly necessary, 

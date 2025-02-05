@@ -1,6 +1,6 @@
 %% ReCreate the BouncingBall object.
 
-sys = BouncingBallFriction();
+sys = BouncingBallSystemClass();
 sys.mu = 2; % Additional velocity at each impact
 
 %% Create the observed augmented system

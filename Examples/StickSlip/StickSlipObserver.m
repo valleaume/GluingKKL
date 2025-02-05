@@ -4,7 +4,7 @@
 %% Create an observed system
 
 % Create a StickSlip object.
-sys = StickSlip();
+sys = StickSlipSystemClass();
 
 % Define the observation function y = h(x)
 h = @(x, t) (x(1));

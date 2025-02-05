@@ -1,4 +1,4 @@
-classdef BouncingBallFriction < HybridSystem
+classdef BouncingBallSystemClass < HybridSystem
     % A bouncing ball modeled as a HybridSystem subclass.
     % Define variable properties that can be modified.
     properties
@@ -19,7 +19,7 @@ classdef BouncingBallFriction < HybridSystem
         velocity_index = 2;
     end
     methods 
-        function this = BouncingBallFriction()
+        function this = BouncingBallSystemClass()
             % Constructor for instances of the BouncingBall class.
             % Call the constructor for the HybridSystem superclass and
             % pass it the state dimension. This is not strictly necessary, 

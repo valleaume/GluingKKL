@@ -40,7 +40,7 @@ classdef Predictor
             % Classify z points
             after_jumps_label = predict(obj.classifier, z);
 
-            % Calculate results of both networks
+            % Calculate x results of both networks
             x_pred_before_jump = predict(obj.mdl_b, (z - obj.mu_b) ./ obj.sigma_b);
             x_pred_after_jump = predict(obj.mdl_a, (z - obj.mu_a) ./ obj.sigma_a);
             
