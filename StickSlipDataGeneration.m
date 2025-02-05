@@ -82,12 +82,13 @@ hpb.title('Ball')...
 %% Generate a labeled dataset of (x,z) pair
 
 % Random initial conditions sampled uniformly inside a specific rectangle
-Init_conditions = aug_sys.generateRandomConditions([-1, 1 ; -3, 2; 0.05, 1; 0.05, 1; -1, 1], 30000);
+Init_conditions = aug_sys.generateRandomConditions([-1, 1 ; -3, 2; 0.05, 1; 0.05, 1; -1, 1], 30000); % take more points to account for some points being
 Init_conditions = Init_conditions(:, Init_conditions(3, :) > Init_conditions(4, :)); % We must have \mu_s > \mu_d
 Init_conditions(5,:) = 1-2*(Init_conditions(2,:)<sys.v_t); % overwrite the adapted q
 
 % Generate the dataset
-data_3 = aug_sys.generateData(Init_conditions, 51, 73, 200, 1000);
+t_take = 5/min(abs(real(eig(A))));
+data_3 = aug_sys.generateData(Init_conditions, t_take, t_take + 20, 200, 1000);
 fprintf( ' Proportion of q = 1 data points : %.2f%%', nnz(data_3(5,:)==1)/nnz(~isnan(data_3(aug_sys.state_dimension + 1,:))) );  % q=1 outlier?
 
 

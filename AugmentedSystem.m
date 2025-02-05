@@ -96,7 +96,7 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
             
             assert(T_take < T_max, "T_take is greater than T_max")
             assert(size(InitConditions, 2) >= n_run, "Not enough initial condition for required number of runs")
-            assert(T_take > 5/abs(eigs(this.A, 1, 'smallestabs')), "T_take not big enough compared to z dynamic")
+            assert(T_take >= 5/min(abs(real(eig(this.A)))), "T_take not big enough compared to z dynamic")
             if ~(exist('train_margin', 'var'))
                 train_margin = 0.1;
             end

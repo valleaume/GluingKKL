@@ -82,7 +82,8 @@ hpb.title('Ball')...
 Init_conditions = aug_sys.generateRandomConditions([0, 5; -12, 12], 400);
 
 % Generate the dataset
-data = aug_sys.generateData(Init_conditions, 7, 20, 200, 400, 0.001);
+t_take = 5/min(abs(real(eig(A))));
+data = aug_sys.generateData(Init_conditions, t_take, t_take + 15, 200, 400, 0.001);
 
 %% Save dataset
 today = string(datetime("today"));
