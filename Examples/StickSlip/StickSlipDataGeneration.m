@@ -4,11 +4,13 @@
 % This system is the modelization of an harmonic oscillator subject to coulomb friction law on a treadmill.
 % We then generate and save a (x, z, labels) dataset using the AugmentedSystem class. 
 
-%% Create a StickSlip object.
+addpath('/utils', '/Examples/StickSlip');
+
+% Create a StickSlip object.
 sys = StickSlipSystemClass();
 
 
-%% Create an observed system
+% Create an observed system
 
 % Define the observation function y = h(x, t)
 h = @(x, t) (x(1));
@@ -26,56 +28,6 @@ A = [-eps, -w_1, 0, 0, 0, 0 ;  w_1, -eps, 0, 0, 0, 0; 0, 0, -eps, -w_2, 0, 0; 0,
 %  Define the AugmentedSystem with state [x, z], specify dim z = 6
 aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 
-
-%% Compute a solution
-
-% Initial condition for the initial system
-x0 =  [0; sys.v_t; 0.45; 0.1; -1];
-
-% Time spans
-tspan = [0, 100];
-jspan = [0, 15];
-
-% Specify solver options.
-config = HybridSolverConfig('AbsTol', 1e-3, 'RelTol', 1e-7);
-
-% Compute solutions
-sol = sys.solve(x0, tspan, jspan, config);
-
-%% Plot the solution
-
-figure(1)
-clf
-hpb = HybridPlotBuilder();
-hpb.title('Ball')...
-    .subplots('on')...
-    .legend()...
-    .plotFlows(sol)
-
-%% Compute an augmented solution
-
-% Initial condition for augmented system
-X0 =  [0; sys.v_t; 0.45; 0.1 ; 0; 0; 0; 0; 0; 0; 0];
-
-% Time spans
-tspan = [0, 16];
-jspan = [0, 20];
-
-% Specify solver options.
-config = HybridSolverConfig('AbsTol', 1e-3, 'RelTol', 1e-7);
-
-% Compute solutions
-sol_aug = aug_sys.solve(X0, tspan, jspan, config);
-
-
-%% Plot Augmented solution
-figure(2)
-clf
-hpb = HybridPlotBuilder();
-hpb.title('Ball')...
-    .subplots('on')...
-    .legend()...
-    .plotFlows(sol_aug)
 
 %% Generate a labeled dataset of (x,z) pair
 
