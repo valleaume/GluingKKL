@@ -22,7 +22,7 @@ classdef ObservedHybridSystem < HybridSystem
             if nargin == 3
                 this.h = h;
                 %h.setAccess = 'immutable';
-                assert(this.check_h(h), "Wrong type for h, should be \mathbb{R}^{this.nx} \mapsto \mathbb{R}^{this.ny}")
+                assert(this.check_h(h), "Wrong type for h, should be $\mathbb{R}^{this.nx} \times \mathbb{R} \mapsto \mathbb{R}^{this.ny}$")
             end
         end
 
@@ -31,7 +31,7 @@ classdef ObservedHybridSystem < HybridSystem
             %   Detailed explanation goes here, does not work if h
             %   immutable
             this.h = h;
-            assert(this.check_h(h), "Wrong type for h, should be \mathbb{R}^nx \mapsto \mathbb{R}^ny")
+            assert(this.check_h(h), "Wrong type for h, should be $\mathbb{R}^nx \times \mathbb{R} \mapsto \mathbb{R}^ny$")
         end
         
         %HERE system must be autonomous, If not there is a problem with

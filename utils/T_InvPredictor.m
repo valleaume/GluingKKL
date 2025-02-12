@@ -1,5 +1,5 @@
-classdef Predictor
-    %Predictor Create a predit object for the gluing methodology
+classdef T_InvPredictor
+    %T_InvPredictor Create a predit object for the gluing methodology
     %   Given 2 regressors and one classifier build a general predictor
     %   that reconstruct x given z.
 
@@ -14,8 +14,8 @@ classdef Predictor
     end
 
     methods
-        function obj = Predictor(models)
-            %Predictor Construct an instance of Predictor
+        function obj = T_InvPredictor(models)
+            %T_InvPredictor Construct an instance of T_InvPredictor
             %   svmModels is a classifier that returns 1 if the z point is
             %   located after a jump, 0 otherwise. 
             %   mdl_b is the regressor trained on the points before jumps.     
@@ -40,7 +40,7 @@ classdef Predictor
             % Classify z points
             after_jumps_label = predict(obj.classifier, z);
 
-            % Calculate results of both networks
+            % Calculate x results of both networks
             x_pred_before_jump = predict(obj.mdl_b, (z - obj.mu_b) ./ obj.sigma_b);
             x_pred_after_jump = predict(obj.mdl_a, (z - obj.mu_a) ./ obj.sigma_a);
             
