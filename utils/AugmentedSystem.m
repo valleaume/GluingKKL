@@ -1,4 +1,10 @@
-classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
+classdef AugmentedSystem < HybridSystem
+    %AUGMENTED HYBRID SYSTEM Wrapper for hybrid system observer object
+    %   This class allows to define the observer linear dynamic of z of 
+    %   an initial observed system. Initial system MUST be autonomous. h can be
+    %   non-deterministic, ie subject to noise. The other purpose of this
+    %   class is the generation and labelling of data points (x; z; labels)
+    %   thanks to a single methode.
     properties(SetAccess = immutable)
         x_indices;
         z_indices;
@@ -11,6 +17,8 @@ classdef AugmentedSystem < HybridSystem  %cannot ihnerit from Observable sys?
     end
     methods
         function this = AugmentedSystem(BaseSystem, nz, A, B)
+            %BaseSystem must be an object of the class ObservedHybridSystem
+            %in order to have an observation function method h
             nx = BaseSystem.state_dimension;
             state_dim = nz + nx;
             this = this@HybridSystem(state_dim);

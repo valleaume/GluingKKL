@@ -4,7 +4,7 @@
 % This system is the modelization of an harmonic oscillator subject to coulomb friction law on a treadmill.
 % We then generate and save a (x, z, labels) dataset using the AugmentedSystem class. 
 
-addpath('/utils', '/Examples/StickSlip');
+addpath('utils', 'Examples/StickSlip');
 
 % Create a StickSlip object.
 sys = StickSlipSystemClass();

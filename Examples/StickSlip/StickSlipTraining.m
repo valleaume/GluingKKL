@@ -1,6 +1,6 @@
 %% Load dataset
 
-addpath('/utils', '/Examples/StickSlip'); 
+addpath('utils', 'Examples/StickSlip'); 
 
 data = load("Data/raw-stick-slip.mat");
 data_3_labels = data.data_3;
@@ -51,7 +51,7 @@ legend('After Jump', 'Before Jump', 'Nan' )
 
 % Remove Nan
 mask = reshape(~isnan(data_3_labels(aug_sys.state_dimension + 1, :)), 1, []);
-fprintf( '%f%% nan over %f%% data points',sum(~mask), length(mask));
+fprintf( '%f% nan over %f% data points',sum(~mask), length(mask));
 X_classifier = data_3_labels(aug_sys.nx + 1:aug_sys.nx+aug_sys.nz, mask);
 Y_classifier = data_3_labels(aug_sys.state_dimension + 1, mask);
 
