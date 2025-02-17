@@ -1,6 +1,6 @@
 %% Test performances of the fully fledged observer
 
-addpath('/utils', '/Examples/StickSlip'); 
+addpath('utils', 'Examples/StickSlip'); 
 %% Create an observed system
 
 % Create a StickSlip object.

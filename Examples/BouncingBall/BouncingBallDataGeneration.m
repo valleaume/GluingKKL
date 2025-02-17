@@ -4,7 +4,7 @@
 % We then generate and save a (x, z, labels) dataset using the AugmentedSystem class. 
 
 % Create a BouncingBall object.
-addpath('/utils', '/Examples/BoucingBall');
+addpath('utils', 'Examples/BouncingBall');
 sys = BouncingBallSystemClass();
 sys.mu = 2; % Additional velocity at each impact
 

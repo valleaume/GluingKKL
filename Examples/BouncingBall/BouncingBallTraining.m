@@ -1,6 +1,6 @@
 %% Load dataset
 
-addpath('/utils', '/Examples/BoucingBall');
+addpath('utils', 'Examples/BouncingBall');
 data = load("Data/raw-bouncing-ball-23-Jan-2025.mat");
 data_3_labels = data.data_3;
 
@@ -14,8 +14,7 @@ hold on
 scatter(data_3_labels(1,data_3_labels(6,:)==0), data_3_labels(2,data_3_labels(6,:)==0), 8, 'b')
 xlabel('x_1')
 ylabel('x_2')
-scatter(Init_conditions(1,:), Init_conditions(2,:), 4)
-legend('After Jump', 'Before Jump', 'Init Conditions' )
+legend('After Jump', 'Before Jump' )
 
 % Plot in the z space
 figure(2)
@@ -35,9 +34,9 @@ legend('After Jump', 'Before Jump', 'Nan' )
 
 % Remove Nan
 mask = reshape(~isnan(data_3_labels(6, :)),1,[]);
-fprintf( '%f%% nan over %f%% data points',sum(~mask), length(mask));
-X_classifier = data_3_labels(aug_sys.nx + 1:aug_sys.nx+aug_sys.nz, mask);
-Y_classifier = data_3_labels(aug_sys.state_dimension + 1, mask);
+fprintf( '%f% nan over %f% data points',sum(~mask), length(mask));
+X_classifier = data_3_labels(3:5, mask);
+Y_classifier = data_3_labels(6, mask);
 
 
 % Test and train split
@@ -189,5 +188,7 @@ fprintf('RMSE before jumps : %.4f\n', rmse);
 
 today = string(datetime("today"));
 directory = 'ObserverModels/';
+A = data.A;
+B = data.B;
 models_name = strcat(directory, 'bouncing-ball-predictor-', today, '.mat');
 save(models_name, 'mdl_b', 'mdl_b', "mu_b", "sigma_b", "mdl_a", "mu_a", "sigma_a", "svmModel", 'A', 'B');

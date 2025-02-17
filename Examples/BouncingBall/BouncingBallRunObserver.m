@@ -1,6 +1,7 @@
 %% Test performances of the fully fledged observer
 
-addpath('/utils', '/Examples/BoucingBall');
+addpath('utils', 'Examples/BouncingBall');
+
 % ReCreate the BouncingBall object.
 sys = BouncingBallSystemClass();
 sys.mu = 2; % Additional velocity at each impact
