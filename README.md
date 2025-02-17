@@ -21,3 +21,4 @@ Each examples consists of
 - A DataGeneration script that generate a dataset ($x$, $z$, labels) for this system.
 - A Training scripts that import the dataset and train the after_jump/before_jump regressors and the classifier.
 - A RunObserver script that illustrate the end result of the observer using those models. 
+Any of these scripts can be run independantly from the others thanks to pre-loaded datasets and pre-trained models. If you want to observe the effect of changing eigenvalues of the $z$ dynamic you must re-run all the scripts in the correct order : DataGeneration &rarr; Training &rarr; RunObserver while making sure that you correctly modified the loaded files at each step. 
