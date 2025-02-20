@@ -1,42 +1,61 @@
-%% Load dataset
+%% Load existing dataset (or run BouncingBallDataGeneration to create a new one)
 
 addpath('utils', 'Examples/BouncingBall');
 data = load("Data/raw-bouncing-ball-23-Jan-2025.mat");
-data_3_labels = data.data_3;
+data_3_labels = data.data_3; 
 
-% Plot the 2 classes of points
+% Dataset structure :
+% 1:2 = x
+% 2:5 = z
+% 6 = label 1 if "after jump", label 0 if "before jump"
+% 7 = label 1 if "after jump" or close to "after jump" ; 0 otherwise
+% 8 = label 1 if "before jump" or close to "before jump" ; 0 otherwise
 
-% Plot in the x space
+% In all this file, we use the datascience convention where X (resp. Y)
+% denotes the inputs (resp. outputs) of NN models
+
+%% Plot the points (x,z) in dataset, depending on whether they are labelled "before jump" or "after jump"
+
+mask_after_jump = (data_3_labels(6,:)==1) ; % to select points labelled as "after jump"
+mask_before_jump = (data_3_labels(6,:)==0) ; % to select points labelled as "before jump"
+mask_nan = (isnan(data_3_labels(6,:))); % to select points labelled as "NAN"
+
+% Plot x-component of points in x-coordinates
 figure(1)
 clf
-scatter(data_3_labels(1,data_3_labels(6,:)==1), data_3_labels(2,data_3_labels(6,:)==1), 8, 'r')
+scatter(data_3_labels(1,mask_after_jump), data_3_labels(2,mask_after_jump), 8, 'r')
 hold on
-scatter(data_3_labels(1,data_3_labels(6,:)==0), data_3_labels(2,data_3_labels(6,:)==0), 8, 'b')
-xlabel('x_1')
-ylabel('x_2')
-legend('After Jump', 'Before Jump' )
+scatter(data_3_labels(1,mask_before_jump), data_3_labels(2,mask_before_jump), 8, 'b')
+xlabel('$x_1$', Interpreter='latex')
+ylabel('$x_2$', Interpreter='latex')
+legend('After Jump', 'Before Jump', Interpreter='latex')
+title('Dataset in $x$-coordinates', Interpreter='latex')
+grid on
 
-% Plot in the z space
+% Plot z-component of points in z-coordinates
 figure(2)
 clf
-scatter3(data_3_labels(3, data_3_labels(6,:)==1), data_3_labels(4, data_3_labels(6,:)==1), data_3_labels(5, data_3_labels(6,:)==1), 8, 'r')
+scatter3(data_3_labels(3, mask_after_jump), data_3_labels(4, mask_after_jump), data_3_labels(5, mask_after_jump), 8, 'r')
 hold on
-scatter3(data_3_labels(3, data_3_labels(6,:)==0), data_3_labels(4, data_3_labels(6,:)==0), data_3_labels(5, data_3_labels(6,:)==0), 8, 'b')
-scatter3(data_3_labels(3, isnan(data_3_labels(6,:))), data_3_labels(4, isnan(data_3_labels(6,:))), data_3_labels(5, isnan(data_3_labels(6,:))), 5, 'black')
-xlabel('z_1')
-ylabel('z_2')
-zlabel('z_3')
-legend('After Jump', 'Before Jump', 'Nan' )
-
+scatter3(data_3_labels(3, mask_before_jump), data_3_labels(4, mask_before_jump), data_3_labels(5, mask_before_jump), 8, 'b')
+scatter3(data_3_labels(3, mask_nan), data_3_labels(4, mask_nan), data_3_labels(5, mask_nan), 5, 'black')
+xlabel('$z_1$', Interpreter='latex')
+ylabel('$z_2$', Interpreter='latex')
+zlabel('$z_3$', Interpreter='latex')
+legend('After Jump', 'Before Jump', 'Nan', Interpreter='latex')
+title('Dataset in $z$-coordinates', Interpreter='latex')
 
 
 %% Train the classifier
+% This classifier should learn to recognize whether a given z corresponds
+% to a point x labelled "before jump" or "after jump" 
+% => input z and output "before/after jump"
 
-% Remove Nan
+% Remove Nan and define the classifier input X and output Y
 mask = reshape(~isnan(data_3_labels(6, :)),1,[]);
 fprintf( '%f% nan over %f% data points',sum(~mask), length(mask));
-X_classifier = data_3_labels(3:5, mask);
-Y_classifier = data_3_labels(6, mask);
+X_classifier = data_3_labels(3:5, mask); % z component
+Y_classifier = data_3_labels(6, mask); % "after/before jump" label
 
 
 % Test and train split
@@ -48,7 +67,7 @@ X_test_classifier = X_classifier(:, test(cv_par_t))';
 Y_test_classifier = Y_classifier(test(cv_par_t))';
 
 
-% Train a SVM separating the z variable base on its position compared to closest jump
+% Train a SVM predicting whether a z-state correspond to a x-state that is "after" or "before" a jump 
 svmModel = fitcsvm(X_train_classifier, Y_train_classifier, 'KernelFunction', 'rbf', 'Standardize', true);
 
 
@@ -61,26 +80,29 @@ accuracy = sum(Y_pred_classifier == Y_test_classifier) / length(Y_test_classifie
 fprintf('Precision SVM : %.2f%%\n', accuracy * 100);
 
 % Display classification errors
-false_flag = ~(Y_pred_classifier == Y_test_classifier);
+false_flag = ~(Y_pred_classifier == Y_test_classifier);  % indices in the test data where the classifier made mistakes
 figure(3)
 clf
-
-pos_vel_array = data_3_labels(1:2, mask);
-pos_vel_array = pos_vel_array(:, test(cv_par_t));
-disp(size(pos_vel_array));
-scatter(pos_vel_array(1, false_flag), pos_vel_array(2, false_flag))
-xlabel('x_1')
-ylabel('x_2')
+x_test = data_3_labels(1:2, mask);
+x_test = x_test(:, test(cv_par_t)); % x component corresponding to the z-components used for testing the classifier
+disp(size(x_test));
+scatter(x_test(1, false_flag), x_test(2, false_flag))
+xlabel('$x_1$', Interpreter='latex')
+ylabel('$x_2$', Interpreter='latex')
 title('Missclassified points')
 
 %% Learn T_inv on half the dataset
+% => input z and output x
 % In order to deal with non_injectivity of T we learn T_inv only on half
 % of the dataset, chosen so that T is injective in this subset. Here we train on
-% points situated after a jump.
+% points classified as "after jump". To improve generalization and avoid errors
+% at the boundary between the "before/after jumps" labels, we also include
+% points classified as "before jump" but very close to the boundary
+
 % Test and train split
 mask_after = reshape(data_3_labels(8, :) == 1, 1, []); % we use the adequate label to also include the points that are before a jump but not by much
-X_after = data_3_labels(3:5, mask_after)'; % We use the datascience notation X, Y, but note that here the X array consists of the z coordinates of points
-Y_after = data_3_labels(1:2, mask_after)'; % Likewise, the Y array consists of the x coordinates of points
+X_after = data_3_labels(3:5, mask_after)'; % z component
+Y_after = data_3_labels(1:2, mask_after)'; % x component
 
 % Split into test and train set
 cv_after = cvpartition(size(Y_after, 1), 'HoldOut', 0.3);
@@ -127,18 +149,18 @@ Y_pred_after = predict(mdl_a, X_test_after);
 rmse = sqrt(mean((Y_pred_after - Y_test_after).^2, 'all'));
 fprintf('RMSE after jumps : %.4f\n', rmse);
 
-%% Learn T_inv on other half the dataset
+%% Learn T_inv on other half of the dataset
+% => input z and output x
 % In order to deal with non_injectivity of T we learn T_inv only on half
 % of the dataset, chosen so that T is injective in this subset. Here we train on
-% points situated before a jump.
+% points classified as "before jump" or close to "before jump".
 
 % Test and train split
-
 mask_before = reshape(data_3_labels(7, :) == 1, 1, []); % We use the adequate label to also include the points that are after a jump but not by much
 
 
-X_before = data_3_labels(3:5,mask_before)'; % We use the datascience notation X, Y, but note that here the X array consists of the z coordinates of points
-Y_before = data_3_labels(1:2,mask_before)'; % Likewise, Y consists of the x coordinates of points
+X_before = data_3_labels(3:5,mask_before)'; % z component
+Y_before = data_3_labels(1:2,mask_before)'; % x component
 
 % Split into test and train set
 cv_before = cvpartition(size(Y_before, 1), 'HoldOut', 0.3);
