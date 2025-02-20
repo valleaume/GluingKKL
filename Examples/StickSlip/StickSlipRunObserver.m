@@ -19,7 +19,7 @@ obs_sys = ObservedHybridSystem(sys, 1, h);
 
 
 % load the z dynamic
-data = load("Data/raw-stick-slip.mat");
+data = load("Data/raw-stick-slip-10-Feb-2025.mat");
 A = data.A;
 B = data.B;
 
@@ -29,15 +29,15 @@ aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 % Generate a ground truth x signal and its corresponding z signal
 
 % Initial condition
-X0 = [0; sys.v_t; 0.7; 0.1; 0]; % start from a sticking state (q = 0, v = v_t), with unexcited spring (x = 0), mu_s = 0.7, mu_d = 0.1 
+X0 = [0; sys.v_t; 0.7; 0.5; 0]; % start from a sticking state (q = 0, v = v_t), with unexcited spring (x = 0), mu_s = 0.7, mu_d = 0.1 
 Z0 = [ 0; 0; 0; 0; 0; 0];
 
 % Time spans
-tspan = [0, 26];
-jspan = [0, 28];
+tspan = [0, 260];
+jspan = [0, 280];
 
 % Specify solver options.
-config = HybridSolverConfig('AbsTol', 1e-3, 'RelTol', 1e-7);
+config = HybridSolverConfig('AbsTol', 1e-3, 'RelTol', 1e-7, "MaxStep", 0.01);
 
 % Compute solutions
 sol_test = aug_sys.solve([X0; Z0], tspan, jspan, config);
@@ -60,7 +60,7 @@ legend(legend_strings);
 
 %% Reconstruct the observer result
 
-pretrained_model = "ObserverModels/stick-slip-predictor.mat";
+pretrained_model = "ObserverModels/stick-slip-predictor-normalized_out-20-Feb-2025.mat";
 models = load(pretrained_model);
 
 % Use the T_InvPredictor utility to easily reconstruct x from z
@@ -107,5 +107,22 @@ plot(sol_test.t(:), sol_test.x(:,4));
 hold on;
 plot(sol_test.t(:), x_pred(:,4));
 title("Dynamic friction coefficient");
+legend('$ \mu_d $', '$\hat{\mu_d}$', 'Interpreter', 'latex');
+
+
+figure(7);
+clf;
+plot(sol_test.t(:), sol_test.x(:,3));
+hold on;
+plot(sol_test.t(:), movmean(x_pred(:,1), 400));  %moving average over 8s (two periods)
+title("Static friction coefficient, filtered");
+legend('$ \mu_s $', '$\hat{\mu_s}$', 'Interpreter', 'latex');
+
+figure(8);
+clf;
+plot(sol_test.t(:), sol_test.x(:,4));
+hold on;
+plot(sol_test.t(:), movmean(x_pred(:,2), 400)); %moving average over 8s (two periods)
+title("Dynamic friction coefficient, filtered");
 legend('$ \mu_d $', '$\hat{\mu_d}$', 'Interpreter', 'latex');
 

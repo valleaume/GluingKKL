@@ -11,9 +11,14 @@ classdef T_InvPredictor
         sigma_b;
         mu_a;
         mu_b;
+        sigma_a_y;
+        sigma_b_y;
+        mu_a_y;
+        mu_b_y;
     end
 
     methods
+
         function obj = T_InvPredictor(models)
             %T_InvPredictor Construct an instance of T_InvPredictor
             %   svmModels is a classifier that returns 1 if the z point is
@@ -22,7 +27,7 @@ classdef T_InvPredictor
             %   mu_b and sigma_b are the associated normalization coefficients.            
             %   mdl_a is the regressor trained on the points after jumps.
             %   mu_a and sigma_a are the associated normalization coefficients.
-              
+                
             obj.classifier = models.svmModel;
             obj.mdl_b = models.mdl_b;
             obj.mdl_a = models.mdl_a;
@@ -30,6 +35,10 @@ classdef T_InvPredictor
             obj.sigma_b = models.sigma_b;
             obj.mu_a = models.mu_a;
             obj.mu_b = models.mu_b;
+            obj.sigma_a_y = models.sigma_a_y;
+            obj.sigma_b_y = models.sigma_b_y;
+            obj.mu_a_y = models.mu_a_y;
+            obj.mu_b_y = models.mu_b_y;
         end
 
         function x_predicted = predict(obj, z)
@@ -41,12 +50,13 @@ classdef T_InvPredictor
             after_jumps_label = predict(obj.classifier, z);
 
             % Calculate x results of both networks
-            x_pred_before_jump = predict(obj.mdl_b, (z - obj.mu_b) ./ obj.sigma_b);
-            x_pred_after_jump = predict(obj.mdl_a, (z - obj.mu_a) ./ obj.sigma_a);
+            x_pred_before_jump = obj.sigma_b_y.*predict(obj.mdl_b, (z - obj.mu_b) ./ obj.sigma_b) + obj.mu_b_y;
+            x_pred_after_jump = obj.sigma_a_y.*predict(obj.mdl_a, (z - obj.mu_a) ./ obj.sigma_a) + obj.mu_a_y;
             
             % Assign the correct result
             x_predicted = x_pred_before_jump;
             x_predicted(after_jumps_label == 1,:) = x_pred_after_jump(after_jumps_label == 1,:);
+
         end
     end
 end
