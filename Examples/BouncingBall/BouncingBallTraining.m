@@ -5,7 +5,7 @@ close all; % close all previously opened figures
 
 dataset_name = "raw-bouncing-ball-21-Feb-2025.mat";
 dataset_labelled = load("Data/" + dataset_name);
-data = dataset_labelled.data_3; 
+data = dataset_labelled.data; 
 
 % Dataset structure :
 % 1:2 = x
@@ -135,7 +135,7 @@ layers = [
     % Training options
 options = trainingOptions('adam', ...
     'ValidationData',{X_test_after, Y_test_after}, ...
-    'ValidationFrequency',30, ...
+    'ValidationFrequency', 30, ...
     'MaxEpochs', 100, ...
     'InitialLearnRate', 0.01, ...
     'L2Regularization', 1e-5, ...
@@ -213,7 +213,7 @@ fprintf('RMSE before jumps : %.4f\n', rmse);
 
 today = string(datetime("today"));
 directory = 'ObserverModels/';
-A = data.A;
-B = data.B;
+A = dataset_labelled.A;
+B = dataset_labelled.B;
 models_name = strcat(directory, 'bouncing-ball-predictor-', today, '.mat');
 save(models_name, 'mdl_b', 'mdl_b', "mu_b", "sigma_b", "mdl_a", "mu_a", "sigma_a", "classifier", 'A', 'B', "dataset_name");

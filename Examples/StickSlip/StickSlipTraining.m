@@ -5,7 +5,7 @@ close all; % close all previously opened figures
 
 dataset_name = "raw-stick-slip.mat";
 datataset_labelled = load("Data/" + dataset_name);
-data = dataset_labelled.data_3;
+data = dataset_labelled.data;
 
 % Dataset structure :
 % 1:5 = x
@@ -26,7 +26,7 @@ h = @(x, t) (x(1));
 obs_sys = ObservedHybridSystem(sys, 1, h);
 
 % Define the AugmentedSystem
-A = datataset_labelled.A;
+A = dataset_labelled.A;
 B = dataset_labelled.B;
 aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 

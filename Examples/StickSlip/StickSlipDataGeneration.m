@@ -41,11 +41,11 @@ Init_conditions(5,:) = 1-2*(Init_conditions(2,:) < sys.v_t); % overwrite q in or
 % Choose a time after which the z dynamic is in stationnary state
 t_take = 5/min(abs(real(eig(A))));  
 % Generate the labeled dataset : from 1000 initial conditions, with 200 points stored per trajectory, chosen between t_take and t_take + 20s
-data_3 = aug_sys.generateData(Init_conditions, t_take, t_take + 20, 40, 12000);
+data = aug_sys.generateData(Init_conditions, t_take, t_take + 20, 40, 12000);
 fprintf( ' Proportion of q = 1 data points : %.2f%%', nnz(data_3(5,:)==1)/nnz(~isnan(data_3(aug_sys.state_dimension + 1,:))) );  % q=1 could be considered an outlier
 
 
 %% Save dataset
 today = string(datetime("today"));
 datas_filename = strcat('Data/raw-stick-slip-', today);
-save(datas_filename, "data_3", "A", "B")  % save labelled dataset and the corresponding z dynamic used to generate it
+save(datas_filename, "data", "A", "B")  % save labelled dataset and the corresponding z dynamic used to generate it
