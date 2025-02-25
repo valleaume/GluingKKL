@@ -115,7 +115,7 @@ classdef StickSlipSystemClass < HybridSystem
             q = x(this.q_index);
             mu_s = x(this.mu_s_index);
             mu_d = x(this.mu_d_index);
-            % Set 'inC' to 1 if 'x' is in the flow set and to 0 otherwise.
+            % Set 'inD' to 1 if 'x' is in the jump set and to 0 otherwise.
             if q == 0
                 inD = (abs(pos) >= mu_s*this.g/this.w^2) & (v == this.v_t);  
             else

@@ -2,7 +2,9 @@
 % In this example, we illustrate the Gluing methodology. We create
 % a StickSlip object using the adequate HybridSystem class.
 % This system is the modelization of an harmonic oscillator subject to coulomb friction law on a treadmill.
-% We then generate and save a (x, z, labels) dataset using the AugmentedSystem class. 
+% We then generate and save a (x, z, labels) dataset using the AugmentedSystem class
+% in view of training a model of the inverse gluing transformation giving x
+% from z. 
 
 addpath('utils', 'Examples/StickSlip');
 
@@ -31,14 +33,14 @@ aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 
 %% Generate a labeled dataset of (x,z) pair
 
-% Random initial conditions sampled uniformly inside a specific box
+% Random initial conditions sampled uniformly inside a specific rectangle
 Init_conditions = aug_sys.generateRandomConditions([-1, 1 ; -3, 2; 0.05, 1; 0.05, 1; -1, 1], 30000); % Take more points to account for some points being discarded
 Init_conditions = Init_conditions(:, Init_conditions(3, :) > Init_conditions(4, :)); % We must have \mu_s > \mu_d, transform the rectangle into a triangle
 Init_conditions(5,:) = 1-2*(Init_conditions(2,:) < sys.v_t); % overwrite q in order to have phyisically plausible initial conditions
 
 % Choose a time after which the z dynamic is in stationnary state
 t_take = 5/min(abs(real(eig(A))));  
-% Generate the labeled dataset : 1000 initial conditions, 200 points per trajectories chosen between t_take and t_take + 20s
+% Generate the labeled dataset : from 1000 initial conditions, with 200 points stored per trajectory, chosen between t_take and t_take + 20s
 data_3 = aug_sys.generateData(Init_conditions, t_take, t_take + 20, 40, 12000);
 fprintf( ' Proportion of q = 1 data points : %.2f%%', nnz(data_3(5,:)==1)/nnz(~isnan(data_3(aug_sys.state_dimension + 1,:))) );  % q=1 could be considered an outlier
 

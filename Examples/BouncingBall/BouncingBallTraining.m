@@ -1,13 +1,15 @@
 %% Load existing dataset (or run BouncingBallDataGeneration to create a new one)
 
 addpath('utils', 'Examples/BouncingBall');
+close all; % close all previously opened figures
+
 data = load("Data/raw-bouncing-ball-23-Jan-2025.mat");
 data_3_labels = data.data_3; 
 
 % Dataset structure :
 % 1:2 = x
 % 2:5 = z
-% 6 = label 1 if "after jump", label 0 if "before jump"
+% 6 = label 1 if "after jump", label 0 if "before jump", Nan if not enough jump during trajectory
 % 7 = label 1 if "after jump" or close to "after jump" ; 0 otherwise
 % 8 = label 1 if "before jump" or close to "before jump" ; 0 otherwise
 
@@ -16,16 +18,16 @@ data_3_labels = data.data_3;
 
 %% Plot the points (x,z) in dataset, depending on whether they are labelled "before jump" or "after jump"
 
-mask_after_jump = (data_3_labels(6,:)==1) ; % to select points labelled as "after jump"
-mask_before_jump = (data_3_labels(6,:)==0) ; % to select points labelled as "before jump"
-mask_nan = (isnan(data_3_labels(6,:))); % to select points labelled as "NAN"
+mask_after_jump = (data_3_labels(6, :)==1) ; % to select points labelled as "after jump"
+mask_before_jump = (data_3_labels(6, :)==0) ; % to select points labelled as "before jump"
+mask_nan = (isnan(data_3_labels(6, :))); % to select points labelled as "NAN"
 
 % Plot x-component of points in x-coordinates
 figure(1)
 clf
-scatter(data_3_labels(1,mask_after_jump), data_3_labels(2,mask_after_jump), 8, 'r')
+scatter(data_3_labels(1, mask_after_jump), data_3_labels(2, mask_after_jump), 8, 'r')
 hold on
-scatter(data_3_labels(1,mask_before_jump), data_3_labels(2,mask_before_jump), 8, 'b')
+scatter(data_3_labels(1, mask_before_jump), data_3_labels(2, mask_before_jump), 8, 'b')
 xlabel('$x_1$', Interpreter='latex')
 ylabel('$x_2$', Interpreter='latex')
 legend('After Jump', 'Before Jump', Interpreter='latex')
@@ -52,7 +54,7 @@ title('Dataset in $z$-coordinates', Interpreter='latex')
 % => input z and output "before/after jump"
 
 % Remove Nan and define the classifier input X and output Y
-mask = reshape(~isnan(data_3_labels(6, :)),1,[]);
+mask = reshape(~isnan(data_3_labels(6, :)), 1, []);
 fprintf( '%f% nan over %f% data points',sum(~mask), length(mask));
 X_classifier = data_3_labels(3:5, mask); % z component
 Y_classifier = data_3_labels(6, mask); % "after/before jump" label
@@ -101,8 +103,8 @@ title('Missclassified points')
 
 % Test and train split
 mask_after = reshape(data_3_labels(8, :) == 1, 1, []); % we use the adequate label to also include the points that are before a jump but not by much
-X_after = data_3_labels(3:5, mask_after)'; % z component
-Y_after = data_3_labels(1:2, mask_after)'; % x component
+X_after = data_3_labels(3:5, mask_after)'; % z component, input
+Y_after = data_3_labels(1:2, mask_after)'; % x component, output
 
 % Split into test and train set
 cv_after = cvpartition(size(Y_after, 1), 'HoldOut', 0.3);
@@ -159,8 +161,8 @@ fprintf('RMSE after jumps : %.4f\n', rmse);
 mask_before = reshape(data_3_labels(7, :) == 1, 1, []); % We use the adequate label to also include the points that are after a jump but not by much
 
 
-X_before = data_3_labels(3:5,mask_before)'; % z component
-Y_before = data_3_labels(1:2,mask_before)'; % x component
+X_before = data_3_labels(3:5,mask_before)'; % z component, input
+Y_before = data_3_labels(1:2,mask_before)'; % x component, output
 
 % Split into test and train set
 cv_before = cvpartition(size(Y_before, 1), 'HoldOut', 0.3);

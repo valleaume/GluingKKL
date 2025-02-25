@@ -59,6 +59,7 @@ pretrained_model = "ObserverModels/bouncing-ball-predictor.mat";
 models = load(pretrained_model);
 T_inv = T_InvPredictor(models); % learned model of the inverse of the gluing transformation
 x_pred = T_inv.predict(z); % estimate \hat x of the system state x
+t = sol_test.t(:); % time array of the solution
 
 %% Plot observer result and ground truth
 figure(2);
@@ -74,34 +75,35 @@ grid on
 
 figure(3);
 subplot(221)
-plot(sol_test.t(:), x(:,1));
+% Figure 3.1
+plot(t, x(:,1));
 hold on;
-plot(sol_test.t(:), x_pred(:,1));
+plot(t, x_pred(:,1));
 title("Position", 'Interpreter', 'latex');
 legx1 = legend("$x_1$", "$\hat{x}_1$",'Interpreter', 'latex');
 xlabel('Time', Interpreter='latex')
 grid on
 
-%figure(4);
+%figure 3.2
 subplot(222)
-plot(sol_test.t(:), x(:,2));
+plot(t, x(:,2));
 hold on;
-plot(sol_test.t(:), x_pred(:,2));
+plot(t, x_pred(:,2));
 title("Velocity", 'Interpreter', 'latex');
 legx2 = legend('$x_2$', '$\hat{x}_2$', 'Interpreter', 'latex');
 xlabel('Time', Interpreter='latex')
 grid on
 
-%figure(5)
+%figure 3.3
 subplot(223)
-plot(sol_test.t(:), x(:,1)-x_pred(:,1));
+plot(t, x(:,1)-x_pred(:,1));
 title("Position estimation error", 'Interpreter', 'latex');
 xlabel('Time', Interpreter='latex')
 grid on
 
-%figure(6)
+%figure 3.4
 subplot(224)
-plot(sol_test.t(:), x(:,2)-x_pred(:,2));
+plot(t, x(:,2)-x_pred(:,2));
 title("Velocity estimation error", 'Interpreter', 'latex');
 xlabel('Time', Interpreter='latex')
 grid on
