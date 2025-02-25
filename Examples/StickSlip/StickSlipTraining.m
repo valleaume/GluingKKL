@@ -3,8 +3,9 @@
 addpath('utils', 'Examples/StickSlip'); 
 close all; % close all previously opened figures
 
-data = load("Data/raw-stick-slip.mat");
-data_3_labels = data.data_3;
+dataset_name = "raw-stick-slip.mat";
+datataset_labelled = load("Data/" + dataset_name);
+data_3_labels = dataset_labelled.data_3;
 
 % Dataset structure :
 % 1:5 = x
@@ -25,8 +26,8 @@ h = @(x, t) (x(1));
 obs_sys = ObservedHybridSystem(sys, 1, h);
 
 % Define the AugmentedSystem
-A = data.A;
-B = data.B;
+A = datataset_labelled.A;
+B = dataset_labelled.B;
 aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 
 
@@ -87,12 +88,12 @@ Y_test_classifier = Y_classifier(test(cv_par_t))';
 
 
 % Train a SVM predicting whether a z-state correspond to a x-state that is "after" or "before" a jump 
-svmModel = fitcsvm(X_train_classifier, Y_train_classifier, 'KernelFunction', 'rbf', 'Standardize', true);
+classifier = fitcsvm(X_train_classifier, Y_train_classifier, 'KernelFunction', 'rbf', 'Standardize', true);
 
 
 % Test
 % Predict on test set
-Y_pred_classifier = predict(svmModel, X_test_classifier);
+Y_pred_classifier = predict(classifier, X_test_classifier);
 
 % Evaluate Precision
 accuracy = sum(Y_pred_classifier == Y_test_classifier) / length(Y_test_classifier);
@@ -257,4 +258,4 @@ fprintf('RMSE before jumps : %.4f\n', rmse);
 today = string(datetime("today"));
 directory = 'ObserverModels/';
 models_name = strcat(directory, 'stick-slip-predictor-', today, '.mat');
-save(models_name, 'mdl_b', 'mdl_b', "mu_b", "sigma_b", "mdl_a", "mu_a", "sigma_a", "svmModel", 'A', 'B');
+save(models_name, 'mdl_b', 'mdl_b', "mu_b", "sigma_b", "mdl_a", "mu_a", "sigma_a", "classifier", 'A', 'B', "dataset_name");

@@ -3,8 +3,9 @@
 addpath('utils', 'Examples/BouncingBall');
 close all; % close all previously opened figures
 
-data = load("Data/raw-bouncing-ball-23-Jan-2025.mat");
-data_3_labels = data.data_3; 
+dataset_name = "raw-bouncing-ball-21-Feb-2025.mat";
+dataset_labelled = load("Data/" + dataset_name);
+data_3_labels = dataset_labelled.data_3; 
 
 % Dataset structure :
 % 1:2 = x
@@ -70,12 +71,12 @@ Y_test_classifier = Y_classifier(test(cv_par_t))';
 
 
 % Train a SVM predicting whether a z-state correspond to a x-state that is "after" or "before" a jump 
-svmModel = fitcsvm(X_train_classifier, Y_train_classifier, 'KernelFunction', 'rbf', 'Standardize', true);
+classifier = fitcsvm(X_train_classifier, Y_train_classifier, 'KernelFunction', 'rbf', 'Standardize', true);
 
 
 % Test
 % Predict on test set
-Y_pred_classifier = predict(svmModel, X_test_classifier);
+Y_pred_classifier = predict(classifier, X_test_classifier);
 
 % Evaluate Precision
 accuracy = sum(Y_pred_classifier == Y_test_classifier) / length(Y_test_classifier);
@@ -215,4 +216,4 @@ directory = 'ObserverModels/';
 A = data.A;
 B = data.B;
 models_name = strcat(directory, 'bouncing-ball-predictor-', today, '.mat');
-save(models_name, 'mdl_b', 'mdl_b', "mu_b", "sigma_b", "mdl_a", "mu_a", "sigma_a", "svmModel", 'A', 'B');
+save(models_name, 'mdl_b', 'mdl_b', "mu_b", "sigma_b", "mdl_a", "mu_a", "sigma_a", "classifier", 'A', 'B', "dataset_name");
