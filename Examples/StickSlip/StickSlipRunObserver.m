@@ -65,8 +65,8 @@ pretrained_model = "ObserverModels/stick-slip-predictor.mat";
 models = load(pretrained_model);
 
 % Verify that the models were trained on the same z dynamic
-assert(A == models.A, "wrong z dynamic"); 
-assert(B == models.B, 'wrong z dynamic');
+assert( isequal(A, models.A), "wrong z dynamic");
+assert( isequal(B, models.B), 'wrong z dynamic');
 
 % Use the T_InvPredictor utility to easily reconstruct x from z
 T_inv = T_InvPredictor(models); % learned model of the inverse of the gluing transformation
