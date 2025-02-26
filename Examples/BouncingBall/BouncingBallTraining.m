@@ -56,7 +56,7 @@ title('Dataset in $z$-coordinates', Interpreter='latex')
 
 % Remove Nan and define the classifier input X and output Y
 mask = reshape(~isnan(data(6, :)), 1, []);
-fprintf( '%f% nan over %f% data points',sum(~mask), length(mask));
+fprintf( '%.0f nan over %.0f data points \n',sum(~mask), length(mask));
 X_classifier = data(3:5, mask); % z component
 Y_classifier = data(6, mask); % "after/before jump" label
 
@@ -88,7 +88,6 @@ figure(3)
 clf
 x_test = data(1:2, mask);
 x_test = x_test(:, test(cv_par_t)); % x component corresponding to the z-components used for testing the classifier
-disp(size(x_test));
 scatter(x_test(1, false_flag), x_test(2, false_flag))
 xlabel('$x_1$', Interpreter='latex')
 ylabel('$x_2$', Interpreter='latex')

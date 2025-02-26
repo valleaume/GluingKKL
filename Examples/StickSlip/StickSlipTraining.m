@@ -4,7 +4,7 @@ addpath('utils', 'Examples/StickSlip');
 close all; % close all previously opened figures
 
 dataset_name = "raw-stick-slip.mat";
-datataset_labelled = load("Data/" + dataset_name);
+dataset_labelled = load("Data/" + dataset_name);
 data = dataset_labelled.data;
 
 % Dataset structure :
@@ -37,8 +37,8 @@ aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 
 % Plot the 2 classes of points
 
-mask_after_jump = data(aug_sys.state_dimension + 1, :)==1 ; % to select points labelled as "after jump"
-mask_before_jump = data(aug_sys.state_dimension + 1, :)==0 ; % to select points labelled as "before jump"
+mask_after_jump = (data(aug_sys.state_dimension + 1, :) == 1) ; % to select points labelled as "after jump"
+mask_before_jump = (data(aug_sys.state_dimension + 1, :) == 0) ; % to select points labelled as "before jump"
 mask_nan = (isnan(data(aug_sys.state_dimension + 1, :))); % to select points labelled as "NAN"
 
 % Plot in the (position, velocity) space
@@ -73,7 +73,7 @@ legend('After Jump', 'Before Jump', 'Nan', Interpreter='latex')
 
 % Remove Nan and define the classifier input X and output Y
 mask = reshape(~isnan(data(aug_sys.state_dimension + 1, :)), 1, []);
-fprintf( '%f% nan over %f% data points',sum(~mask), length(mask));
+fprintf( '%.0f nan over %.0f data points \n',sum(~mask), length(mask));
 X_classifier = data(aug_sys.nx + 1:aug_sys.nx+aug_sys.nz, mask); % z component
 Y_classifier = data(aug_sys.state_dimension + 1, mask); % "after/before jump" label
 
@@ -106,7 +106,6 @@ clf
 
 x_test = data(1:2, mask);
 x_test = x_test(:, test(cv_par_t)); % x component corresponding to the z-components used for testing the classifier
-disp(size(x_test));
 scatter(x_test(1, false_flag), x_test(2, false_flag))
 xlabel('$x_1$', Interpreter='latex')
 ylabel('$x_2$', Interpreter='latex')
