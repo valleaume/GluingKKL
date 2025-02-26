@@ -23,7 +23,7 @@ classdef T_InvPredictor
             %   mdl_a is the regressor trained on the points after jumps.
             %   mu_a and sigma_a are the associated normalization coefficients.
               
-            obj.classifier = models.svmModel;
+            obj.classifier = models.classifier;
             obj.mdl_b = models.mdl_b;
             obj.mdl_a = models.mdl_a;
             obj.sigma_a = models.sigma_a;
