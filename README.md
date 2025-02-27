@@ -1,6 +1,6 @@
-# GluingKKL
+# Gluing KKL observer
 
-Implement the Gluing KKL methodology for hybrid systems introduced in https://hal.science/hal-04685195/document, illustrate it on 2 examples : the bouncing ball and the stick slip phenomenon.
+Implement the Gluing KKL methodology for hybrid systems with unknown jump times, presented in https://hal.science/hal-04685195/document, and illustrate it on 2 examples : the bouncing ball and dry friction parameter estimation in friction oscillator exhibiting stick-slip.
 
 ## Requirements
 Requires MATLAB 2024b or higher, the [Statistics and Machine Learning Toolbox](https://mathworks.com/products/statistics.html) package, the [Deep Learning Toolbox](https://mathworks.com/products/deep-learning.html) package and the [Hybrid Equations Toolbox](https://mathworks.com/matlabcentral/fileexchange/41372-hybrid-equations-toolbox) package.
