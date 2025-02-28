@@ -37,7 +37,7 @@ classdef AugmentedSystem < HybridSystem
         function Xdot = flowMap(this, X, t, j)
             x = X(this.x_indices);
             z = X(this.z_indices);
-            xdot = this.baseSystem.flowMap(x);
+            xdot = this.baseSystem.flowMap(x, t, j);  % Flow should be antonomous for designing T, allows for perturbations
             zdot = this.A*z + (this.baseSystem.h(x,t)*this.B')';
             Xdot = [xdot; zdot];
         end
@@ -45,7 +45,7 @@ classdef AugmentedSystem < HybridSystem
         function Xplus = jumpMap(this, X, t, j)
             x = X(this.x_indices);
             z = X(this.z_indices);
-            xplus = this.baseSystem.jumpMap(x);
+            xplus = this.baseSystem.jumpMap(x, t, j);
             zplus = z;
             Xplus = [xplus; zplus];
         end
@@ -53,13 +53,13 @@ classdef AugmentedSystem < HybridSystem
         function inC = flowSetIndicator(this, X, t, j)
             % Extract the state components
             x = X(this.x_indices);
-            inC = this.baseSystem.flowSetIndicator(x);
+            inC = this.baseSystem.flowSetIndicator(x, t, j);
         end
 
         function inD = jumpSetIndicator(this, X, t, j)
             % Extract the state components
             x = X(this.x_indices);
-            inD = this.baseSystem.jumpSetIndicator(x);
+            inD = this.baseSystem.jumpSetIndicator(x, t, j);
         end
 
         function InitConditions = generateUniformConditions(this, bounds, n)

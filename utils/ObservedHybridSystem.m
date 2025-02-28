@@ -37,19 +37,19 @@ classdef ObservedHybridSystem < HybridSystem
         %HERE system must be autonomous, If not there is a problem with
         %lambda?
         function Xdot = flowMap(this, x, t, j)
-            Xdot = this.unobservedSystem.flowMap(x); %t, j
+            Xdot = this.unobservedSystem.flowMap(x, t, j); %t, j
         end
 
         function Xplus = jumpMap(this, x, t, j)
-            Xplus = this.unobservedSystem.jumpMap(x); % t, j
+            Xplus = this.unobservedSystem.jumpMap(x, t, j); % t, j
         end
 
         function inC = flowSetIndicator(this, x, t, j)
-            inC = this.unobservedSystem.flowSetIndicator(x); % t, j
+            inC = this.unobservedSystem.flowSetIndicator(x, t, j); % t, j
         end
 
         function inD = jumpSetIndicator(this, x, t, j)
-            inD = this.unobservedSystem.jumpSetIndicator(x); % t, j  ?
+            inD = this.unobservedSystem.jumpSetIndicator(x,t,j); % t, j  ?
         end
 
         function y = get_y(this, x)
