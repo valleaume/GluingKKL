@@ -37,7 +37,7 @@ classdef BouncingBallSystemClass < HybridSystem
             % Define the value of the flow map f(x). 
             xdot = [v; -this.gamma - sign(v) * this.f_air*v^2];
         end
-        function xplus = jumpMap(this, x)
+        function xplus = jumpMap(this, x, t, j)
             % Extract the state components.
             h = x(this.height_index);
             v = x(this.velocity_index);
@@ -45,7 +45,7 @@ classdef BouncingBallSystemClass < HybridSystem
             xplus = [h; -this.lambda*v + this.mu];
         end
         
-        function inC = flowSetIndicator(this, x)
+        function inC = flowSetIndicator(this, x, t, j)
             % Extract the state components.
             h = x(this.height_index);
             v = x(this.velocity_index);
@@ -53,7 +53,7 @@ classdef BouncingBallSystemClass < HybridSystem
             % Set 'inC' to 1 if 'x' is in the flow set and to 0 otherwise.
             inC = (h >= 0) || (v >= 0);
         end
-        function inD = jumpSetIndicator(this, x)
+        function inD = jumpSetIndicator(this, x, t, j)
             % Extract the state components.
             h = x(this.height_index);
             v = x(this.velocity_index);

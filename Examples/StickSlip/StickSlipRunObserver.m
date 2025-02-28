@@ -4,7 +4,7 @@ addpath('utils', 'Examples/StickSlip');
 close all; % close all previously opened figures
 
 % ReCreate the StickSlip object.
-sys = StickSlipSystemClass();
+sys = StickSlipSystemClassPerturbed();
 % Create the observed augmented system
 
 %%%%%%%% CAN BE CHANGED %%%%%%%%
@@ -34,7 +34,7 @@ X0 = [0; sys.v_t; 0.7; 0.5; 0]; % start from a sticking state (q = 0, v = v_t), 
 Z0 = [ 0; 0; 0; 0; 0; 0];
 
 % Time spans
-tspan = [0, 76];
+tspan = [0, 140];
 jspan = [0, 280];
 
 % Specify solver options.
