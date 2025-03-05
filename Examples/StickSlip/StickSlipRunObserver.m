@@ -30,7 +30,7 @@ aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 % trajectory z
 
 % Initial condition
-X0 = [0; sys.v_t; 0.7; 0.1; 0]; % start from a sticking state (q = 0, v = v_t), with unexcited spring (x = 0), mu_s = 0.7, mu_d = 0.1 
+X0 = [0; sys.v_t; 0.7; 0.5; 0]; % start from a sticking state (q = 0, v = v_t), with unexcited spring (x = 0), mu_s = 0.7, mu_d = 0.5 ; To see an alternation of modes 0,-1,1, choose mu_d = 0.1
 Z0 = [ 0; 0; 0; 0; 0; 0];
 
 % Time spans
@@ -147,6 +147,7 @@ plot(t, x_pred(:,4));
 title("Dynamic friction coefficient", Interpreter = 'latex');
 xlabel('Time', Interpreter='latex')
 legend('$ \mu_d $', '$\hat{\mu_d}$', 'Interpreter', 'latex');
+grid on
 
 subplot(224)
 % Figure 4.2

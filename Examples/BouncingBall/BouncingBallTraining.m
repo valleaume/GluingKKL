@@ -91,7 +91,8 @@ x_test = x_test(:, test(cv_par_t)); % x component corresponding to the z-compone
 scatter(x_test(1, false_flag), x_test(2, false_flag))
 xlabel('$x_1$', Interpreter='latex')
 ylabel('$x_2$', Interpreter='latex')
-title('Missclassified points')
+title('Missclassified points',Interpreter='latex')
+grid on
 
 %% Learn T_inv on half the dataset
 % => input z and output x
