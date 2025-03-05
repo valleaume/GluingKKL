@@ -7,7 +7,7 @@ classdef StickSlipSystemClassPerturbed < HybridSystem
         g = 9.8;  % Acceleration due to gravity.
         w = sqrt(10);  % Oscillator's pulsation, sqrt(k/m) for mechanical oscillator
         v_t = 0.5; % Speed of the treadmill
-        time_of_perturbation = 80;
+        time_of_perturbation = 60;
         perturbed = false;
         to_change = false;
          

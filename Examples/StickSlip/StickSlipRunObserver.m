@@ -34,7 +34,7 @@ X0 = [0; sys.v_t; 0.7; 0.5; 0]; % start from a sticking state (q = 0, v = v_t), 
 Z0 = [ 0; 0; 0; 0; 0; 0];
 
 % Time spans
-tspan = [0, 140];
+tspan = [0, 120];
 jspan = [0, 280];
 
 % Specify solver options.
@@ -129,7 +129,7 @@ hold on;
 plot(t, x_pred(:,3));
 title("Static friction coefficient", Interpreter = 'latex');
 xlabel('Time', Interpreter='latex')
-legx3 = legend('$ \mu_s $', '$\hat{\mu_s}$', 'Interpreter', 'latex');
+legx3 = legend('$ \mu_s $', '$\hat{\mu}_s$', 'Interpreter', 'latex');
 grid on 
 
 subplot(223)
@@ -146,7 +146,8 @@ hold on;
 plot(t, x_pred(:,4));
 title("Dynamic friction coefficient", Interpreter = 'latex');
 xlabel('Time', Interpreter='latex')
-legend('$ \mu_d $', '$\hat{\mu_d}$', 'Interpreter', 'latex');
+legend('$ \mu_d $', '$\hat{\mu}_d$', 'Interpreter', 'latex');
+grid on
 
 subplot(224)
 % Figure 4.2
@@ -170,4 +171,7 @@ plot(t, x(:, 5) - x_pred(:, 5));
 title("Mode error", Interpreter = 'latex');
 xlabel('Time', Interpreter='latex')
 grid on 
+
+
+
 
