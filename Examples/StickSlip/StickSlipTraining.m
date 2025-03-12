@@ -47,9 +47,10 @@ clf
 scatter(data(1, mask_after_jump), data(2, mask_after_jump), 8, 'r')
 hold on
 scatter(data(1, mask_before_jump), data(2, mask_before_jump), 8, 'b')
+scatter3(data(1, mask_nan), data(2, mask_nan), 4, 'black')
 xlabel('$x_1$', Interpreter='latex')
 ylabel('$x_2$', Interpreter='latex')
-legend('After Jump', 'Before Jump', Interpreter='latex')
+legend('After Jump', 'Before Jump', 'Nan', Interpreter='latex')
 title('Dataset in $x_1, x_2$-coordinates', Interpreter='latex')
 grid on
 
