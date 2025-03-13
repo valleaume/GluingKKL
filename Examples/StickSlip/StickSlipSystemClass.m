@@ -5,7 +5,7 @@ classdef StickSlipSystemClass < HybridSystem
     % Define variable properties that can be modified.
     properties
         g = 9.8;  % Acceleration due to gravity.
-        w = sqrt(10);  % Oscillator's pulsation, sqrt(k/m) for mechanical oscillator
+        w = sqrt(10);  % Oscillator's frequency, sqrt(k/m) for mechanical oscillator
         v_t = 0.5; % Speed of the treadmill
          
     end
