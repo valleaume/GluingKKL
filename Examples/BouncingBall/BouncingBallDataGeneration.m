@@ -30,7 +30,7 @@ Init_conditions = aug_sys.generateRandomConditions([0, 5; -12, 12], 400);
 
 % Choose a time after which the z dynamic is in stationnary state
 t_take = 5/min(abs(real(eig(A))));
-% Generate the dataset from 400 initial conditions, with 200 points stored per trajectory, chosen between t_take and t_take + 15s, max_dt of ODE solver : 0.001
+% Generate the dataset from 400 initial conditions, with 200 points stored per trajectory, chosen between t_take and t_take + 15s, max_dt of ODE solver : 0.001s
 data = aug_sys.generateData(Init_conditions, t_take, t_take + 15, 200, 400, 0.001);
 
 %% Save dataset

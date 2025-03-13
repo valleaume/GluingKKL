@@ -7,15 +7,18 @@ dataset_name = "raw-bouncing-ball-21-Feb-2025.mat";
 dataset_labelled = load("Data/" + dataset_name);
 data = dataset_labelled.data; 
 
-% Dataset structure :
+% Dataset structure:
 % 1:2 = x
 % 2:5 = z
 % 6 = label 1 if "after jump", label 0 if "before jump", Nan if not enough jump during trajectory
+%        -> used for training the classifier
 % 7 = label 1 if "after jump" or close to "after jump" ; 0 otherwise
+%        -> used for training one regressor
 % 8 = label 1 if "before jump" or close to "before jump" ; 0 otherwise
+%        -> used for training the other regressor
 
 % In all this file, we use the datascience convention where X (resp. Y)
-% denotes the inputs (resp. outputs) of NN models
+% denotes the inputs (resp. outputs) of NN models.
 
 %% Plot the points (x,z) in dataset, depending on whether they are labelled "before jump" or "after jump"
 
@@ -101,7 +104,8 @@ grid on
 % of the dataset, chosen so that T is injective in this subset. Here we train on
 % points classified as "after jump". To improve generalization and avoid errors
 % at the boundary between the "before/after jumps" labels, we also include
-% points classified as "before jump" but very close to the boundary
+% points classified as "before jump" but very close to the boundary. Adding those 
+% points does not hinder the injectivity of T_inv on the subset.
 
 % Test and train split
 mask_after = reshape(data(8, :) == 1, 1, []); % we use the adequate label to also include the points that are before a jump but not by much

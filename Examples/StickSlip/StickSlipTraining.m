@@ -7,12 +7,15 @@ dataset_name = "raw-stick-slip.mat";
 dataset_labelled = load("Data/" + dataset_name);
 data = dataset_labelled.data;
 
-% Dataset structure :
+% Dataset structure:
 % 1:5 = x
 % 6:11 = z
 % 12 = label 1 if "after jump", label 0 if "before jump", Nan if not enough jump during trajectory
+%        -> used for training the classifier
 % 13 = label 1 if "after jump" or close to "after jump" ; 0 otherwise
+%        -> used for training one regressor
 % 14 = label 1 if "before jump" or close to "before jump" ; 0 otherwise
+%        -> used for training the other regressor
 
 % In all this file, we use the datascience convention where X (resp. Y)
 % denotes the inputs (resp. outputs) of NN models
@@ -129,7 +132,8 @@ title('Missclassified points')
 % of the dataset, chosen so that T is injective in this subset. Here we train on
 % points classified as "after jump". To improve generalization and avoid errors
 % at the boundary between the "before/after jumps" labels, we also include
-% points classified as "before jump" but very close to the boundary
+% points classified as "before jump" but very close to the boundary. Adding those 
+% points dos not hinder the injectivity of T_inv on the subset.
 
 % Test and train split
 mask_after = reshape(data(aug_sys.state_dimension + 3, :) == 1, 1, []);  % we use the adequate label to also include the points that are before a jump but not by much
