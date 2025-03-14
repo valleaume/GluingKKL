@@ -7,10 +7,10 @@ classdef ObserverBouncingBallSystemClass < HybridSystem
         lambda = 0.8; % Coefficient of restitution.
         mu = 2;       % Coefficient of additive velocity.
         f_air = 0.01; % Coefficient of air friction.
-        l1 = 3;
-        l2 = 5;
-        ld1 = 1;
-        ld2 = 1;
+        Lc_1 = 3;
+        Lc_2 = 5;
+        Ld_1 = 1;
+        Ld_2 = 1;
         k1 = 3;
          
     end
@@ -51,7 +51,7 @@ classdef ObserverBouncingBallSystemClass < HybridSystem
             h_obs = x(this.height_index_obs);
             v_obs = x(this.velocity_index_obs);
             % Define the value of the flow map f(x). 
-            xdot = [v; -this.gamma - sign(v) * this.f_air*v^2; v_obs + this.l1*(h - h_obs); -this.gamma - sign(v_obs) * this.f_air*v_obs^2 + this.l2*(h - h_obs)];
+            xdot = [v; -this.gamma - sign(v) * this.f_air*v^2; v_obs + this.Lc_1*(h - h_obs); -this.gamma - sign(v_obs) * this.f_air*v_obs^2 + this.Lc_2*(h - h_obs)];
         end
         function xplus = jumpMap(this, x, t, j)
             % Extract the state components.
@@ -61,10 +61,10 @@ classdef ObserverBouncingBallSystemClass < HybridSystem
             v_obs = x(this.velocity_index_obs);
             % Define the value of the jump map g(x). 
             if (h <= 0) && (h_obs + this.k1*(h-h_obs) <= 0) 
-                 xplus = [h; -this.lambda*v + this.mu; h_obs; -this.lambda*v_obs + this.mu];
+                 xplus = [h; -this.lambda*v + this.mu; h_obs + this.Ld_1*(h - h_obs); -this.lambda*v_obs + this.mu + this.Ld_2*(h - h_obs)];
             else
                 if h_obs + this.k1*(h-h_obs) <= 0 
-                    xplus = [h; v; h_obs; -this.lambda*v_obs + this.mu];
+                    xplus = [h; v; h_obs + this.Ld_1*(h - h_obs); -this.lambda*v_obs + this.mu + this.Ld_2*(h - h_obs)];
                 else
                     if h <= 0
                         xplus = [h; -this.lambda*v + this.mu; h_obs; v_obs];
