@@ -38,6 +38,9 @@ HybridPlotBuilder().subplots('on')...
 hold on
 HybridPlotBuilder().subplots('on')...
     .labels('$x_1$', '$x_2$')...
+    .flowColor('#FF8800')...
+    .jumpColor('m')...
+    .jumpEndMarker('o')...
     .plotFlows(sol('Observer'))
 
 figure(2)
@@ -67,11 +70,11 @@ H = [1, 0];
 w = [1; 0];
 tau = 15.6718 - 13.6045;
 x = [0; -10.0995];
-M_before = J - sys_obs.L_d*H - (J*sys_ball.flowMap(x, 0, 0, 0) - sys_ball.flowMap(sys_ball.jumpMap(x, 0, 0, 0), 0, 0, 0) )/x(2)*w'
-M_after = M_before - sys_obs.L_d*H*(sys_ball.flowMap(sys_ball.jumpMap(x, 0, 0, 0), 0, 0, 0) - sys_ball.flowMap(x, 0, 0, 0))/x(2)*w'
+M_before = J - sys_obs.L_d*H - (J*sys_ball.flowMap(x, 0, 0, 0) - sys_ball.flowMap(sys_ball.jumpMap(x, 0, 0, 0), 0, 0, 0) )/x(2)*w';
+M_after = M_before - sys_obs.L_d*H*(sys_ball.flowMap(sys_ball.jumpMap(x, 0, 0, 0), 0, 0, 0) - sys_ball.flowMap(x, 0, 0, 0))/x(2)*w';
 
 
-abs(eig(M_after*expm((F-sys_obs.L_c*H)*tau)))
 abs(eig(M_before*expm((F-sys_obs.L_c*H)*tau)))
+abs(eig(M_after*expm((F-sys_obs.L_c*H)*tau)))
 
 
