@@ -55,7 +55,9 @@ title( "Velocity error");
 
 figure(4)
 
-plot(sol('Ball').t, (sol('Ball').x(:,2) - sol('Observer').x(:,2)).^2 + (sol('Ball').x(:,1) - sol('Observer').x(:,1)).^2) ;
+e = sol('Ball').x - sol('Observer').x;
+P = eye(2);
+plot(sol('Ball').t, diag(e*P*e'));
 title("Norm error");
 
 figure(5)

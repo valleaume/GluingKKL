@@ -23,6 +23,9 @@ H = [1, 0];
 w = [1; 0];
 tau = 15.6718 - 13.6045;
 x = [0; -10.0995];
+
+% Naive search
+
 do_break = false;
 
 for ld_1 = -5:0.01:5
