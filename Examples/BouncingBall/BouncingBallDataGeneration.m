@@ -17,21 +17,36 @@ h = @(x, t) (x(1));
 
 % Create the associated BouncingBall object
 obs_sys = ObservedHybridSystem(sys, 1, h);
-
+nx = 25;
 % Define the z dynamic :  z' = Az + Bh(x)
-A = diag([-1, -2, -3]); % choose 3 real eigenvalues for the z dynamic 
-B = [1; 1; 1];
-aug_sys = AugmentedSystem(obs_sys, 3, A, B);
+halfnz = 2;
+nz = 2 * halfnz;
+maxReal = 8;
+maxImag = 4;
+realParts = -maxReal * rand(halfnz, 1);
+imagParts = maxImag * (rand(halfnz, 1) - 1/2) * 2;
+poles = [realParts + 1i * imagParts; realParts - 1i * imagParts];
+plot(real(poles), imag(poles), 'o')
+
+A = [realParts(1), -imagParts(1);imagParts(1), realParts(1)];
+for k = 2:halfnz
+    A = [A zeros(2 * (k-1), 2);zeros(2, 2* (k-1)) [realParts(k), -imagParts(k);imagParts(k), realParts(k)]];
+end
+
+B = ones(nz,1);
+
+aug_sys = AugmentedSystem(obs_sys, nz, A, B);
 
 %% Generate a labeled dataset of (x,z) pair
 
+nInit = 40;
 % Random initial conditions sampled uniformly inside a specific rectangle
-Init_conditions = aug_sys.generateRandomConditions([0, 5; -12, 12], 400);
+Init_conditions = aug_sys.generateRandomConditions([0, 5; -12, 12], nInit);
 
 % Choose a time after which the z dynamic is in stationnary state
 t_take = 5/min(abs(real(eig(A))));
 % Generate the dataset from 400 initial conditions, with 200 points stored per trajectory, chosen between t_take and t_take + 15s, max_dt of ODE solver : 0.001s
-data = aug_sys.generateData(Init_conditions, t_take, t_take + 15, 200, 400, 0.001);
+data = aug_sys.generateData(Init_conditions, t_take, t_take + 15, 200, nInit, 0.001);
 
 %% Save dataset
 today = string(datetime("today"));

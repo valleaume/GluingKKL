@@ -3,7 +3,7 @@
 addpath('utils', 'Examples/BouncingBall');
 close all; % close all previously opened figures
 
-dataset_name = "raw-bouncing-ball-21-Feb-2025.mat";
+dataset_name = "raw-bouncing-ball-19-Jun-2026.mat";
 dataset_labelled = load("Data/" + dataset_name);
 data = dataset_labelled.data; 
 
@@ -22,9 +22,9 @@ data = dataset_labelled.data;
 
 %% Plot the points (x,z) in dataset, depending on whether they are labelled "before jump" or "after jump"
 
-mask_after_jump = (data(6, :)==1) ; % to select points labelled as "after jump"
-mask_before_jump = (data(6, :)==0) ; % to select points labelled as "before jump"
-mask_nan = (isnan(data(6, :))); % to select points labelled as "NAN"
+mask_after_jump = (data(nx+nz+1, :)==1) ; % to select points labelled as "after jump"
+mask_before_jump = (data(nx+nz+1, :)==0) ; % to select points labelled as "before jump"
+mask_nan = (isnan(data(nx+nz+1, :))); % to select points labelled as "NAN"
 
 % Plot x-component of points in x-coordinates
 figure(1)
@@ -59,10 +59,10 @@ title('Dataset in $z$-coordinates', Interpreter='latex')
 % => input z and output "before/after jump"
 
 % Remove Nan and define the classifier input X and output Y
-mask = reshape(~isnan(data(6, :)), 1, []);
+mask = reshape(~isnan(data(nx+nz+1, :)), 1, []);
 fprintf( '%.0f nan over %.0f data points \n',sum(~mask), length(mask));
-X_classifier = data(3:5, mask); % z component
-Y_classifier = data(6, mask); % "after/before jump" label
+X_classifier = data(nx+1:nx+nz, mask); % z component
+Y_classifier = data(nx+nz+1, mask); % "after/before jump" label
 
 
 % Test and train split
@@ -108,9 +108,9 @@ grid on
 % points does not hinder the injectivity of T_inv on the subset.
 
 % Test and train split
-mask_after = reshape(data(8, :) == 1, 1, []); % we use the adequate label to also include the points that are before a jump but not by much
-X_after = data(3:5, mask_after)'; % z component, input
-Y_after = data(1:2, mask_after)'; % x component, output
+mask_after = reshape(data(nx + nz + 3, :) == 1, 1, []); % we use the adequate label to also include the points that are before a jump but not by much
+X_after = data(nx+1:nx+nz, mask_after)'; % z component, input
+Y_after = data(1:nx, mask_after)'; % x component, output
 
 % Split into test and train set
 cv_after = cvpartition(size(Y_after, 1), 'HoldOut', 0.3);
@@ -126,14 +126,14 @@ X_test_after = (X_test_after - mu_a) ./ sigma_a;
 % Train neural network
 % Create neural network
 layers = [
-    featureInputLayer(3)
-    fullyConnectedLayer(100)
+    featureInputLayer(nz)
+    fullyConnectedLayer(64)
     tanhLayer
-    fullyConnectedLayer(100)
+    fullyConnectedLayer(64)
     tanhLayer
-    fullyConnectedLayer(100)
+    fullyConnectedLayer(64)
     tanhLayer
-    fullyConnectedLayer(2)
+    fullyConnectedLayer(nx)
     regressionLayer];
 
     
@@ -164,11 +164,11 @@ fprintf('RMSE after jumps : %.4f\n', rmse);
 % points classified as "before jump" or close to "before jump".
 
 % Test and train split
-mask_before = reshape(data(7, :) == 1, 1, []); % We use the adequate label to also include the points that are after a jump but not by much
+mask_before = reshape(data(nx+nz+2, :) == 1, 1, []); % We use the adequate label to also include the points that are after a jump but not by much
 
 
-X_before = data(3:5,mask_before)'; % z component, input
-Y_before = data(1:2,mask_before)'; % x component, output
+X_before = data(nx+1:nx+nz,mask_before)'; % z component, input
+Y_before = data(1:nx,mask_before)'; % x component, output
 
 % Split into test and train set
 cv_before = cvpartition(size(Y_before, 1), 'HoldOut', 0.3);
@@ -183,14 +183,14 @@ X_test_before = (X_test_before - mu_b) ./ sigma_b;
 % Train Neural Network
 % Create neural network
 layers = [
-    featureInputLayer(3)
-    fullyConnectedLayer(100)
+    featureInputLayer(nz)
+    fullyConnectedLayer(64)
     tanhLayer
-    fullyConnectedLayer(100)
+    fullyConnectedLayer(64)
     tanhLayer
-    fullyConnectedLayer(100)
+    fullyConnectedLayer(64)
     tanhLayer
-    fullyConnectedLayer(2) 
+    fullyConnectedLayer(nx) 
     regressionLayer];
 
 

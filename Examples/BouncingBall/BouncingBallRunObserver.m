@@ -19,17 +19,17 @@ h = @(x, t) (x(1) + perturbation_amp*sin(t));
 % Create the associated BouncingBall object
 obs_sys = ObservedHybridSystem(sys, 1, h);
 
-% Define the AugmentedSystem
-A = diag([-1, -2, -3]);
-B = [1; 1; 1];
-aug_sys = AugmentedSystem(obs_sys, 3, A, B);
+% % Define the AugmentedSystem
+% A = diag([-1, -2, -3]);
+% B = [1; 1; 1];
+% aug_sys = AugmentedSystem(obs_sys, 3, A, B);
 
 % Generate a ground truth system trajectory x and a corresponding observer
 % trajectory z
-
-% Initial condition
+% 
+% % Initial condition
 X0 = [5; 2];  % system initial condition
-Z0 = [0; 0; 0]; % observer initial condition
+Z0 = zeros(nz, 1); % observer initial condition
 
 % Time spans
 tspan = [0, 20];
@@ -42,7 +42,7 @@ config = HybridSolverConfig('AbsTol', 1e-3, 'RelTol', 1e-7);
 sol_test = aug_sys.solve([X0; Z0], tspan, jspan, config);
 
 x = sol_test.x(:, 1:2); % system trajectory
-z = sol_test.x(:, 3:5); % observer trajectory
+z = sol_test.x(:, 3:nz+2); % observer trajectory
 
 % Plot observer trajectory
 figure(1);
@@ -55,7 +55,7 @@ xlabel('Time', Interpreter='latex')
 grid on
 
 %% Reconstruct the observer estimate in x-coordinates
-pretrained_model = "ObserverModels/bouncing-ball-predictor.mat";
+pretrained_model = "ObserverModels/bouncing-ball-predictor-19-Jun-2026.mat";
 models = load(pretrained_model);
 
 % Verify that the models were trained on the same z dynamic
