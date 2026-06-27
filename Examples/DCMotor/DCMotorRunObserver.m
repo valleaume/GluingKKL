@@ -124,14 +124,9 @@ models = load(strcat('ObserverModels/', model_files(idx_model).name));
 assert(isequal(A, models.A) && isequal(B, models.B), 'Loaded model does not match current z dynamic.');
 
 % Reconstruct x from z.
-X_pred = zeros(size(x));
-P = 5;
-for i = 1:P
-    X_pred(:, i) = predict(models.mdl{i}, z);
-end
 
 %z = cat(2, z, x(:,5:6)); % we also input u and u_dot to the predictor
-%X_pred = predict(models.mdl, (z - models.mu) ./ models.sigma);
+X_pred = predict(models.mdl, (z - models.mu) ./ models.sigma);
 
 figure;
 plot(x(:, 1), x(:, 2), 'LineWidth', 1.5);
