@@ -8,7 +8,7 @@ sys = DCMotorHybridSystemSineClass();
 
 % Define the observation function y = h(x, t)
 h = @(x, t) [x(2)]; %, x(3), x(5), x(6)]; % observe rotor angle, angular velocity and input
-obs_sys = ObservedHybridSystem(sys, 4, h);
+obs_sys = ObservedHybridSystem(sys, 1, h);
 
 % Load the latest dataset to recover the z dynamic.
 files = dir('Data/raw-dc-motor-*.mat');
@@ -18,24 +18,24 @@ loaded = load(strcat('Data/', files(idx).name));
 A = loaded.A;
 B = loaded.B;
 
-% disp(A);
-% disp(B);
+disp(A);
+disp(B);
 % A = A(1:8, 1:8); % keep only the part of A corresponding to the omega dynamic
 % B = B(1:8, 1); % keep only the part of B corresponding to the omega dynamic
 % A(8,8 ) = -15;
 
-eps = 2*pi/50;
-w_1 = 2*pi;
-w_2 = pi/3;
-w_3 = 5*pi;
-w_4 = pi;
-A = diag([-eps, -0.3*eps, -w_3, -w_2, -w_1, -w_4]);
-B = ones(6, 1);
-disp(A);
-disp(B);
+% eps = 2*pi/50;
+% w_1 = 2*pi;
+% w_2 = pi/3;
+% w_3 = 5*pi;
+% w_4 = pi;
+% A = diag([-eps, -0.3*eps, -w_3, -w_2, -w_1, -w_4]);
+% B = ones(6, 1);
+% disp(A);
+% disp(B);
 
 % Define the augmented system.
-aug_sys = AugmentedSystem(obs_sys, 6, A, B);
+aug_sys = AugmentedSystem(obs_sys, 7, A, B);
 
 % Choose an initial condition for the DC motor state and the observer state.
 u_0 = 0; % initial input
@@ -116,7 +116,7 @@ legend('T mode 0', 'T mode 1', 'T mode -1', '$z_5$', 'Interpreter', 'latex');
 title('Observer in z space', 'Interpreter', 'latex');
 
 % Load a trained predictor if available.
-model_files = dir('ObserverModels/dc-motor-predictor-*.mat');
+model_files = dir('ObserverModels/dc-motor-predictor-parameter*.mat');
 assert(~isempty(model_files), 'No DC motor predictor model found in ObserverModels/');
 [~, idx_model] = max([model_files.datenum]);
 models = load(strcat('ObserverModels/', model_files(idx_model).name));
@@ -126,44 +126,44 @@ assert(isequal(A, models.A) && isequal(B, models.B), 'Loaded model does not matc
 % Reconstruct x from z.
 
 %z = cat(2, z, x(:,5:6)); % we also input u and u_dot to the predictor
-X_pred = predict(models.mdl, (z - models.mu) ./ models.sigma);
+X_pred = predict(models.mdl_p, (z - models.mu) ./ models.sigma);
 
-figure;
-plot(x(:, 1), x(:, 2), 'LineWidth', 1.5);
-hold on;
-plot(X_pred(:, 1), X_pred(:, 2), '--', 'LineWidth', 1.5);
-legend('Ground truth', 'Observer estimate', 'Interpreter', 'latex');
-title('DC Motor state reconstruction', 'Interpreter', 'latex');
-xlabel('$x_1$', 'Interpreter', 'latex');
-ylabel('$x_2$', 'Interpreter', 'latex');
-grid on;
+% figure;
+% plot(x(:, 1), x(:, 2), 'LineWidth', 1.5);
+% hold on;
+% plot(X_pred(:, 1), X_pred(:, 2), '--', 'LineWidth', 1.5);
+% legend('Ground truth', 'Observer estimate', 'Interpreter', 'latex');
+% title('DC Motor state reconstruction', 'Interpreter', 'latex');
+% xlabel('$x_1$', 'Interpreter', 'latex');
+% ylabel('$x_2$', 'Interpreter', 'latex');
+% grid on;
 
-figure
+% figure
 
-plot(t, x(:, 1), 'LineWidth', 1.5);
-hold on;
-plot(t, X_pred(:, 1), '--', 'LineWidth', 1.5);
-legend('Ground truth', 'Observer estimate', 'Interpreter', 'latex');
-title('DC Motor current reconstruction', 'Interpreter', 'latex');
-xlabel('Time', 'Interpreter', 'latex');
+% plot(t, x(:, 1), 'LineWidth', 1.5);
+% hold on;
+% plot(t, X_pred(:, 1), '--', 'LineWidth', 1.5);
+% legend('Ground truth', 'Observer estimate', 'Interpreter', 'latex');
+% title('DC Motor current reconstruction', 'Interpreter', 'latex');
+% xlabel('Time', 'Interpreter', 'latex');
 
-ylabel('$x_1$ (current)', 'Interpreter', 'latex');
-grid on;
+% ylabel('$x_1$ (current)', 'Interpreter', 'latex');
+% grid on;
 
-figure;
-plot(t, x(:, 2), 'LineWidth', 1.5);
-hold on;
-plot(t, X_pred(:, 2), '--', 'LineWidth', 1.5);
-legend('Ground truth', 'Observer estimate', 'Interpreter', 'latex');
-title('DC Motor angular velocity reconstruction', 'Interpreter', 'latex');
-xlabel('Time', 'Interpreter', 'latex');
-ylabel('$x_2$ (angular velocity)', 'Interpreter', 'latex');
-grid on;
+% figure;
+% plot(t, x(:, 2), 'LineWidth', 1.5);
+% hold on;
+% plot(t, X_pred(:, 2), '--', 'LineWidth', 1.5);
+% legend('Ground truth', 'Observer estimate', 'Interpreter', 'latex');
+% title('DC Motor angular velocity reconstruction', 'Interpreter', 'latex');
+% xlabel('Time', 'Interpreter', 'latex');
+% ylabel('$x_2$ (angular velocity)', 'Interpreter', 'latex');
+% grid on;
 
 figure;
 plot(t, x(:, 7), 'LineWidth', 1.5);
 hold on;
-plot(t, X_pred(:, 4), '--', 'LineWidth', 1.5);
+plot(t, X_pred(:, 1), '--', 'LineWidth', 1.5);
 legend('Ground truth', 'Observer estimate', 'Interpreter', 'latex');
 title('DC Motor static friction reconstruction', 'Interpreter', 'latex');       
 xlabel('Time', 'Interpreter', 'latex');
@@ -171,6 +171,6 @@ ylabel('$x_4$ (static friction)', 'Interpreter', 'latex');
 grid on;
 hold on;
 plot(t, x(:, 8), 'LineWidth', 1.5);
-plot(t, X_pred(:, 5), '--', 'LineWidth', 1.5);
+plot(t, X_pred(:, 2), '--', 'LineWidth', 1.5);
 legend('Ground truth F_s', 'Observer estimate F_s', 'Ground truth F_d', 'Observer estimate F_d', 'Interpreter', 'latex');
 

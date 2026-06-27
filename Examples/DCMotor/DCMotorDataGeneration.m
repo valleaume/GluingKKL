@@ -42,8 +42,8 @@ bounds = [
     %0,    1;    % mode
     -12,  12;   % u
     %-1,   1;    % u_dot
-    2e-5, 2e-4; % F_s
-    1e-5, 1e-4;  % F_d
+    2e-4, 8e-3; % F_s
+    1e-4, 2e-3;  % F_d
     2*pi/20, 4*pi/3 % pulsation
 ];
 
@@ -70,11 +70,11 @@ Init_Conditions = Init_Conditions(:, Init_Conditions(7, :) > Init_Conditions(8, 
 t_take = 5/min(abs(real(eig(A)))) + 0.1;
 
 disp('Generating dataset... This may take a few minutes.');
-data = aug_sys.generateUnlabbelledData(Init_Conditions, t_take, t_take + 45, 300, 1000, 0.1);
+data = aug_sys.generateUnlabbelledData(Init_Conditions, t_take, t_take + 45, 300, 7000, 0.1);
 disp(size(data));
 
 %% Save dataset
 
 today = string(datetime("today"));
-datas_filename = strcat('Data/raw-dc-motor-sparse-', today);
+datas_filename = strcat('Data/raw-dc-motor-full-', today);
 save(datas_filename, "data", "A", "B");
