@@ -79,7 +79,7 @@ classdef AugmentedSystem < HybridSystem
             InitConditions = rand(seed, this.nx, n_points) .* (bounds(:, 2) - bounds(:, 1)) + bounds(:, 1);
         end
 
-        function DataSet = generateData(this, InitConditions, T_take, T_max, points_per_run, n_run, max_dt_step, train_margin)
+        function DataSet = generateData(this, InitConditions, T_take, T_max, points_per_run, n_run, max_dt_step, train_margin, skip_no_label)
             %GENERATE DATA Method that generate a dataset of points and 
             %label them. 
             %   The points are randomly sampled alongside trajectories
@@ -107,13 +107,21 @@ classdef AugmentedSystem < HybridSystem
             
             assert(T_take < T_max, "T_take is greater than T_max")
             assert(size(InitConditions, 2) >= n_run, "Not enough initial condition for required number of runs")
-            assert(T_take >= 5/min(abs(real(eig(this.A)))), "T_take not big enough compared to z dynamic")
+            
+            if T_take >= 5/min(abs(real(eig(this.A))))
+                warning('T_take (%.2f) may not be big enough compared to z dynamic : response time  = %.2f', T_take, 1/min(abs(real(eig(this.A)))))
+            end
+
             if ~(exist('train_margin', 'var'))
                 train_margin = 0.1;
             end
 
             if ~(exist('max_dt_step', 'var'))
                 max_dt_step = 0.01;
+            end
+
+            if ~(exist('skip_no_label', 'var'))
+                skip_no_label = true;
             end
 
 
@@ -143,6 +151,9 @@ classdef AugmentedSystem < HybridSystem
                 tmax_ind = last_index;  % Max index of time
 
                 if data_j(tmax_ind) - data_j(tmin_ind) < 2  % ensure there is at least 1 complete jump after T_take (otherwise there is no interest in splitting)
+                    if ~skip_no_label
+                        DataSet(i,:,:) = cat(2, data_x(randsample(seed, tmin_ind:tmax_ind, points_per_run, points_per_run>tmax_ind-tmin_ind),:), nan(points_per_run, 3)); % if there is no complete jump after T_take, we cannot label the data : we keep the points but with nan labels
+                    end
                     continue;
                 end
 
@@ -216,6 +227,73 @@ classdef AugmentedSystem < HybridSystem
                 
             end
             DataSet = reshape(permute(DataSet,[3, 1, 2]), this.state_dimension + 3, []); % replace both axis (points_per_run, n_run) into one single axis of size  (points_per_run * n_run)
+        end
+
+        function DataSet = generateUnlabbelledData(this, InitConditions, T_take, T_max, points_per_run, n_run, max_dt_step)
+            %GENERATE DATA Method that generate a dataset of points and 
+            %label them. 
+            %   The points are randomly sampled alongside trajectories
+            %   of the augmented system initialized thanks to the input
+            %   array.  Sampling is started after T_take time so that the transitory period is dropped.
+            %   INPUTS : 
+            %       - InitConditions : (M, n_x + n_z) array, with M >= n_run
+            %       - T_take : Time after which the transitory period is finished
+            %       - T_max : End time for simulations
+            %       - points_per_run : Number of points randomly sampled each run
+            %       - n_run : Number of run
+            %       - max_dt_steps : maximum length of a time step of the integration scheme, default 0.01
+            %   OUTPUT :
+            %      DataSet : (n_run, points_per_run, n_x + n_z + 3) array
+
+            
+            assert(T_take < T_max, "T_take is greater than T_max")
+            assert(size(InitConditions, 2) >= n_run, "Not enough initial condition for required number of runs")
+            
+            if T_take >= 5/min(abs(real(eig(this.A))))
+                warning('T_take (%.2f) may not be big enough compared to z dynamic : response time  = %.2f', T_take, 1/min(abs(real(eig(this.A)))))
+            end
+
+            if ~(exist('max_dt_step', 'var'))
+                max_dt_step = 0.01;
+            end
+
+            config = HybridSolverConfig('silent', 'AbsTol', 1e-3, 'RelTol', 1e-7, 'MaxStep', max_dt_step);
+
+            J_max = 1000; 
+            J_init = 0;
+            tspan = [0, T_max]; 
+            jspan = [J_init, J_max]; % Jump Span, make it very large to set the stopping condition to be a certain time, not a certain number of jumps (except if Zeno)
+            
+            
+            DataSet = nan(n_run, points_per_run, this.state_dimension ); % default value is nan  if labellization was impossible
+            AugmentedInitConditions = cat(1, InitConditions(:, 1:n_run), zeros(this.nz, n_run));
+            seed = RandStream('mlfg6331_64'); %set seed for reproduction purposes
+            
+            for i = 1:n_run
+                AugmentedIc = AugmentedInitConditions(:, i); 
+                sol = this.solve(AugmentedIc, tspan, jspan, config);
+            
+                data_x = sol.x;  % Data of (x,z)
+                data_t = sol.t;  % Data of (t)
+
+                data_t_ind = size(data_t);  % Indices span
+                last_index = data_t_ind(1);
+                tmin_ind = find(data_t > T_take, 1);  % Min index of time such that t > T_take
+                tmax_ind = last_index;  % Max index of time
+
+                len_t = tmax_ind - tmin_ind + 1;
+
+                if points_per_run > len_t 
+                    warning('%s points are sampled but only %s points are present between %s s and %s s : repetitions are exeptionnaly authorized. Consider reducing max_dt_steps or augmenting T_max', points_per_run, len_t, T_take, T_max )
+                end
+
+                DataSet_index = randsample(seed, tmin_ind:tmax_ind, points_per_run, points_per_run>len_t); % sample randomly the points
+                DataSet_index = sort(DataSet_index);
+
+                DataSet(i,:,:) =  data_x(DataSet_index,:);
+                
+            end
+            DataSet = reshape(permute(DataSet,[3, 1, 2]), this.state_dimension, []); % replace both axis (points_per_run, n_run) into one single axis of size  (points_per_run * n_run)
         end
        
 

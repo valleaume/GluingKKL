@@ -172,3 +172,13 @@ title("Mode error", Interpreter = 'latex');
 xlabel('Time', Interpreter='latex')
 grid on 
 
+
+figure(6);
+mask_q_0 = (x(:, 5)==0)
+scatter(t(mask_q_0), sys.w^2*x(mask_q_0, 1));
+hold on;
+scatter(t, - x(:, 5).*x(:, 4)*sys.g);
+title("Mode", Interpreter = 'latex');
+xlabel('Time', Interpreter='latex')
+legx4 = legend('$ Spring Force $', '$Dynamical friction $', 'Interpreter', 'latex');
+grid on 
