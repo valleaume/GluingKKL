@@ -7,16 +7,16 @@ classdef DCMotorHybridSystemClass < HybridSubsystem
         % Electrical parameters
         R = 2.35;      % Armature resistance (Ohms)   9.3?
         L = 2.2e-3;      % Armature inductance (H)
-        Kt = 0.28;     % Torque constant (Nm/A)
-        Ke = 0.017;     % Back-EMF constant (V/(rad/s))
+        Kt = 0.28*pi/180;     % Torque constant (Nm/A)
+        Ke = 0.017*180/pi;     % Back-EMF constant (V/(rad/s))
 
         U_max = 48;  % Maximum voltage (V)
 
         % Mechanical parameters
         J = 8.3e-5;       % Rotor inertia (kg*m^2)
-        F_s = 0.056;     % Coulomb static friction torque (Nm)
-        F_d = 0.025;     % Coulomb dynamic friction torque (Nm)
-        T_load = 0.0;   % External load torque (Nm) (can be set dynamically)
+        %F_s = 0.056;     % Coulomb static friction torque (Nm)
+        %F_d = 0.025;     % Coulomb dynamic friction torque (Nm)
+
 
         % Stiction threshold (to avoid division by zero)
         omega_threshold = 1e-3;
