@@ -22,6 +22,7 @@ disp(A);
 disp(B);
 A = A(1:8, 1:8); % keep only the part of A corresponding to the omega dynamic
 B = B(1:8, 1); % keep only the part of B corresponding to the omega dynamic
+A(8,8 ) = -15;
 
 disp(A);
 disp(B);
@@ -30,10 +31,10 @@ disp(B);
 aug_sys = AugmentedSystem(obs_sys, 8, A, B);
 
 % Choose an initial condition for the DC motor state and the observer state.
-u_0 = 1; % initial input
+u_0 = 0; % initial input
 u_dot_0 = 1; % initial input derivative
-U_pulsation = pi; % pulsation of the input sine wave, we keep it constant for the test
-X0 = [-0.; 0; 0; 0; u_0; u_dot_0; 0.056; 0.023; U_pulsation]; % initial state of the system, we start with q = 1 to see a mode transition in the trajectory
+U_pulsation = 0.6*pi; % pulsation of the input sine wave, we keep it constant for the test
+X0 = [-0.; 0; 0; 0; u_0; u_dot_0; 0.0616; 0.031; U_pulsation]; % initial state of the system, we start with q = 1 to see a mode transition in the trajectory
 Z0 = zeros(aug_sys.nz, 1);
 
 % Time spans.
@@ -50,16 +51,24 @@ sol = aug_sys.solve([X0; Z0], tspan, jspan, config);
 x = sol.x(:, 1:aug_sys.nx);
 z = sol.x(:, aug_sys.nx + 1 : aug_sys.nx + aug_sys.nz);
 
-z = cat(2, z, x(:,5:6), x(:,9)); % we also input u and u_dot to the predictor
+z = cat(2, z, x(:,5:6), x(:,9)); % we also add input u and u_dot to the predictor, and pulsation
 
 t = sol.t(:);
 
-lambda = -3;
+lambda = -15;
 G = [1/sys.L; 0; 0];
 F_1 = [-sys.R/sys.L, -sys.Ke/sys.L, 0; sys.Kt/sys.J, 0, 0; 0, 1, 0];
 H = [0, 1, 0];
 M_1 = H/(F_1 - lambda * eye(3));
 N_1 = M_1*G;
+i_star = -1/sys.Kt*X0(8);
+
+
+A__1 = [0; X0(8)/sys.J; 0];
+A_1 = [0; -X0(8)/sys.J; 0];
+
+B_1 = M_1*A_1/lambda;
+B__1 = M_1*A__1/lambda;
 
 F_0 = [-sys.R/sys.L, -sys.Ke/sys.L, 0; 0, 0, 0; 0, 1, 0];
 M_0 = H/(F_0 - lambda * eye(3));
@@ -71,8 +80,9 @@ ampl = u_dot_0^2+u_0^2; % amplitude of the input sine wave
 w = ampl/(lambda^2+U_pulsation^2)*(lambda*cos(U_pulsation*t)-U_pulsation*sin(U_pulsation*t)); 
 disp(size(w));
 
-T_0 = M_0*x(:,1:3)' + N_0*w'; % observer correction term for mode 0
-T_1 = M_1*x(:,1:3)' + N_1*w'; % observer correction term for mode 1
+T_0 = M_0*x(:,1:3)' + N_0*w'; 
+T_1 = M_1*x(:,1:3)' + N_1*w' + B_1; 
+T__1 = M_1*x(:,1:3)' + N_1*w' + B__1; 
 
 figure;
 plot(t, z);
@@ -83,15 +93,19 @@ grid on;
 
 disp(size(T_0));
 disp(size(T_1));    
+disp(size(T__1));    
 disp(size(z));
 
 figure
 plot(t, T_0, 'LineWidth', 1.5);
 hold on;    
 plot(t, T_1, 'LineWidth', 1.5);
-legend('T mode 0', 'T mode 1', 'Interpreter', 'latex');
 hold on;
-plot(t, z(:,5)', '--', 'LineWidth', 1.5);
+plot(t, T__1, '--', 'LineWidth', 1.5);
+hold on;
+plot(t, z(:,8)', 'LineWidth', 1.5);
+
+legend('T mode 0', 'T mode 1', 'T mode -1', '$z_5$', 'Interpreter', 'latex');
 title('Observer in z space', 'Interpreter', 'latex');
 
 % Load a trained predictor if available.
