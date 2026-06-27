@@ -4,10 +4,10 @@ addpath('utils', 'Examples/DCMotor');
 close all;
 
 % Recreate the DC motor object.
-sys = DCMotorHybridSystemClass();
+sys = DCMotorHybridSystemSineClass();
 
 % Define the observation function y = h(x, t)
-h = @(x, t) [x(2), x(3), x(5), x(6)]; % observe rotor angle, angular velocity and input
+h = @(x, t) [x(2)]; %, x(3), x(5), x(6)]; % observe rotor angle, angular velocity and input
 obs_sys = ObservedHybridSystem(sys, 4, h);
 
 % Load the latest dataset to recover the z dynamic.
@@ -20,12 +20,20 @@ B = loaded.B;
 
 disp(A);
 disp(B);
+A = A(1:8, 1:8); % keep only the part of A corresponding to the omega dynamic
+B = B(1:8, 1); % keep only the part of B corresponding to the omega dynamic
+
+disp(A);
+disp(B);
 
 % Define the augmented system.
-aug_sys = AugmentedSystem(obs_sys, 8*4, A, B);
+aug_sys = AugmentedSystem(obs_sys, 8, A, B);
 
 % Choose an initial condition for the DC motor state and the observer state.
-X0 = [-0.; 0; 0; 0; 1; 0; 0.066; 0.005];
+u_0 = 0.02; % initial input
+u_dot_0 = 1; % initial input derivative
+U_pulsation = pi; % pulsation of the input sine wave, we keep it constant for the test
+X0 = [-0.; 0; 0; 0; u_0; u_dot_0; 0.56; 0.23; U_pulsation]; % initial state of the system, we start with q = 1 to see a mode transition in the trajectory
 Z0 = zeros(aug_sys.nz, 1);
 
 % Time spans.
@@ -41,6 +49,8 @@ sol = aug_sys.solve([X0; Z0], tspan, jspan, config);
 % Extract system and observer trajectories.
 x = sol.x(:, 1:aug_sys.nx);
 z = sol.x(:, aug_sys.nx + 1 : aug_sys.nx + aug_sys.nz);
+
+z = cat(2, z, x(:,5:6), x(:,9)); % we also input u and u_dot to the predictor
 
 t = sol.t(:);
 
@@ -61,7 +71,7 @@ assert(isequal(A, models.A) && isequal(B, models.B), 'Loaded model does not matc
 
 % Reconstruct x from z.
 
-z = cat(2, z, x(:,5:6)); % we also input u and u_dot to the predictor
+%z = cat(2, z, x(:,5:6)); % we also input u and u_dot to the predictor
 X_pred = predict(models.mdl, (z - models.mu) ./ models.sigma);
 
 figure;
@@ -99,14 +109,14 @@ grid on;
 figure;
 plot(t, x(:, 7), 'LineWidth', 1.5);
 hold on;
-plot(t, X_pred(:, 7), '--', 'LineWidth', 1.5);
+plot(t, X_pred(:, 4), '--', 'LineWidth', 1.5);
 legend('Ground truth', 'Observer estimate', 'Interpreter', 'latex');
 title('DC Motor static friction reconstruction', 'Interpreter', 'latex');       
 xlabel('Time', 'Interpreter', 'latex');
-ylabel('$x_7$ (static friction)', 'Interpreter', 'latex');
+ylabel('$x_4$ (static friction)', 'Interpreter', 'latex');
 grid on;
 hold on;
 plot(t, x(:, 8), 'LineWidth', 1.5);
-plot(t, X_pred(:, 8), '--', 'LineWidth', 1.5);
+plot(t, X_pred(:, 5), '--', 'LineWidth', 1.5);
 legend('Ground truth F_s', 'Observer estimate F_s', 'Ground truth F_d', 'Observer estimate F_d', 'Interpreter', 'latex');
 

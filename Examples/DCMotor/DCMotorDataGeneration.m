@@ -38,36 +38,46 @@ aug_sys = AugmentedSystem(obs_sys, 8*4, A, B);
 
 %% Generate a labeled dataset of (x, z) pairs
 
-% Random initial conditions sampled uniformly inside a specific rectangle.
-Init_conditions = aug_sys.generateRandomConditions([
-    -2,   2;   % current
-    -50,  50;   % angular velocity
-    -pi,  pi;   % angular position
-    0,    1;    % mode
+bounds = [
+    %-2,   2;   % current              
+    %-50,  50;   % angular velocity
+    %-pi,  pi;   % angular position
+    %0,    1;    % mode
     -12,  12;   % u
-    -1,   1;    % u_dot
+    %-1,   1;    % u_dot
     0.002, 0.2; % F_s
     0.001, 0.1;  % F_d
-    2*pi/10, 4*pi/3 % pulsation
-], 40000);
+    2*pi/20, 4*pi/3 % pulsation
+];
+
+% Random initial conditions sampled uniformly inside a specific rectangle. Take advantage of omega_limit
+n_points = 40000;
+seed = RandStream('mlfg6331_64');
+Init_Conditions_varying = rand(seed, 4, n_points) .* (bounds(:, 2) - bounds(:, 1)) + bounds(:, 1);
+
+Init_Conditions = zeros(9, n_points);
+Init_Conditions(7:9, :) = Init_Conditions_varying(2:4, :);    
+Init_Conditions(5,:) = Init_Conditions_varying(1, :); % we set the initial input u to be the first component of the random sample, and the initial input derivative u_dot to 0 for all trajectories, as we want to test the predictor on a wide range of inputs but we want to keep the same pulsation for all trajectories in order to be able to compare them
+
+%Init_Conditions = aug_sys.generateRandomConditions(bound, 40000);
 
 % Ensure physically realistic friction parameters: F_s > F_d
-Init_conditions = Init_conditions(:, Init_conditions(7, :) > Init_conditions(8, :)); % We must have \mu_s > \mu_d, transform the rectangle into a triangle
-Init_conditions(4,:) = (abs(Init_conditions(2,:)) > sys.omega_threshold); % overwrite q in order to have phyisically plausible initial conditions
-cv_static = cvpartition(size(Init_conditions, 2), 'HoldOut', 0.5);
+Init_Conditions = Init_Conditions(:, Init_Conditions(7, :) > Init_Conditions(8, :)); % We must have \mu_s > \mu_d, transform the rectangle into a triangle
+%Init_Conditions(4,:) = (abs(Init_Conditions(2,:)) > sys.omega_threshold); % overwrite q in order to have phyisically plausible initial conditions
+%cv_static = cvpartition(size(Init_Conditions, 2), 'HoldOut', 0.5);
 
-Init_conditions(4, test(cv_static)) = 0; % Set static mode for test set, as static mode is less represented when sampling uniformly in the rectangle
-Init_conditions(2, test(cv_static)) = 0; % Set angular velocity to 0 for static mode in the test set
+%Init_Conditions(4, test(cv_static)) = 0; % Set static mode for test set, as static mode is less represented when sampling uniformly in the rectangle
+%Init_Conditions(2, test(cv_static)) = 0; % Set angular velocity to 0 for static mode in the test set
 
 % Choose a time after which the z dynamic has reached stationarity
 t_take = 3/min(abs(real(eig(A))));
 
 disp('Generating dataset... This may take a few minutes.');
-data = aug_sys.generateUnlabbelledData(Init_conditions, t_take, t_take + 30, 200, 10000, 0.01);
+data = aug_sys.generateUnlabbelledData(Init_Conditions, t_take, t_take + 45, 400, 3000, 0.01);
 disp(size(data));
 
 %% Save dataset
 
 today = string(datetime("today"));
-datas_filename = strcat('Data/raw-dc-motor-', today);
+datas_filename = strcat('Data/raw-dc-motor-sparse-', today);
 save(datas_filename, "data", "A", "B");

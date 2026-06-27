@@ -17,6 +17,13 @@ data = data_obj.data;
 disp(A);
 disp(B);
 
+A = A(1:8, 1:8); % keep only the part of A corresponding to the omega dynamic
+B = B(1:8, 1); % keep only the part of B corresponding to the omega dynamic
+
+disp(A);
+disp(B);
+
+
 figure(1);
 histogram(data(4, :), 2);
 title('Distribution of the mode q in the dataset', 'Interpreter', 'latex'); 
@@ -29,17 +36,24 @@ title('Distribution of the u in the dataset', 'Interpreter', 'latex');
 sys = DCMotorHybridSystemClass();
 
 % Define the observation function y = h(x, t)
-h = @(x, t) x(3);
+h = @(x, t) x(2);
 obs_sys = ObservedHybridSystem(sys, 1, h);
 
 % Define the AugmentedSystem with the same z dynamic
-aug_sys = AugmentedSystem(obs_sys, 8*4, A, B);
+aug_sys = AugmentedSystem(obs_sys, 8, A, B);
 
 % Extract z and x components from the dataset.
 X = data(aug_sys.nx + 1 : aug_sys.nx + aug_sys.nz, :)';
 Y = data(1 : aug_sys.nx, :)';
-U_input = Y(:,5:6); % extract u and u_dot from x 
-X = cat(2, X, U_input); % we keep u and u_dot as input of the predictor
+
+U_input = data(5:6, :)'; % extract u and u_dot from x 
+U_pulsation = data(9, :)'; % extract the pulsation of the input sine wave from the dataset
+X = cat(2, X, U_input, U_pulsation); % we keep u and u_dot as input of the predictor
+
+State = Y(:, 1:3); % current, angular velocity and rotor angle
+Friction_coef= Y(:, 7:8); % friction coefficients
+
+Y = cat(2, State, Friction_coef); % we want to predict the current, angular velocity, rotor angle and friction coefficients from z, u, u_dot and pulsation
 
 % Remove NaN rows if present.
 valid = all(~isnan(X), 2) & all(~isnan(Y), 2);
@@ -62,14 +76,14 @@ X_test = (X_test - mu) ./ sigma;
 
 % Regression network from z to x.
 layers = [
-    featureInputLayer(aug_sys.nz+2) % we also input u and u_dot to the predictor
+    featureInputLayer(11) % we also input u and u_dot to the predictor
     fullyConnectedLayer(100)
     tanhLayer
     fullyConnectedLayer(100)
     tanhLayer
     fullyConnectedLayer(100)
     tanhLayer
-    fullyConnectedLayer(aug_sys.nx)
+    fullyConnectedLayer(5)
     regressionLayer];
 
 % Training options
@@ -93,5 +107,5 @@ fprintf('DC Motor inverse gluing RMSE: %.4f\n', rmse);
 
 % Save the trained model.
 today = string(datetime('today'));
-model_filename = strcat('ObserverModels/dc-motor-predictor-', today);
+model_filename = strcat('ObserverModels/dc-motor-predictor-sparse-', today);
 save(model_filename, 'mdl', 'mu', 'sigma', 'A', 'B', 'dataset_name');
