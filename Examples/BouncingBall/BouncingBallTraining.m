@@ -3,9 +3,12 @@
 addpath('utils', 'Examples/BouncingBall');
 close all; % close all previously opened figures
 
-dataset_name = "raw-bouncing-ball-19-Jun-2026.mat";
+dataset_name = "raw-bouncing-ball-27-Jun-2026.mat";
 dataset_labelled = load("Data/" + dataset_name);
 data = dataset_labelled.data; 
+B = dataset_labelled.B;
+nz = size(B, 1);
+nx = 2;
 
 % Dataset structure:
 % 1:2 = x

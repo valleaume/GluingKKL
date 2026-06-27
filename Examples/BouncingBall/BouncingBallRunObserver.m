@@ -19,10 +19,20 @@ h = @(x, t) (x(1) + perturbation_amp*sin(t));
 % Create the associated BouncingBall object
 obs_sys = ObservedHybridSystem(sys, 1, h);
 
-% % Define the AugmentedSystem
-% A = diag([-1, -2, -3]);
-% B = [1; 1; 1];
-% aug_sys = AugmentedSystem(obs_sys, 3, A, B);
+%%% Load models
+
+pretrained_model = "ObserverModels/bouncing-ball-predictor-27-Jun-2026.mat";
+models = load(pretrained_model);
+
+A = models.A;
+disp(A);
+B = models.B;
+
+assert(size(A, 1) == size(B, 1))
+nz = size(B, 1);
+nx = 2;
+
+aug_sys = AugmentedSystem(obs_sys, nz, A, B);
 
 % Generate a ground truth system trajectory x and a corresponding observer
 % trajectory z
@@ -42,7 +52,7 @@ config = HybridSolverConfig('AbsTol', 1e-3, 'RelTol', 1e-7);
 sol_test = aug_sys.solve([X0; Z0], tspan, jspan, config);
 
 x = sol_test.x(:, 1:2); % system trajectory
-z = sol_test.x(:, 3:nz+2); % observer trajectory
+z = sol_test.x(:, nx+1:nz+nx); % observer trajectory
 
 % Plot observer trajectory
 figure(1);
@@ -55,12 +65,6 @@ xlabel('Time', Interpreter='latex')
 grid on
 
 %% Reconstruct the observer estimate in x-coordinates
-pretrained_model = "ObserverModels/bouncing-ball-predictor-19-Jun-2026.mat";
-models = load(pretrained_model);
-
-% Verify that the models were trained on the same z dynamic
-assert( isequal(A, models.A), "wrong z dynamic"); 
-assert( isequal(B, models.B), 'wrong z dynamic');
 
 T_inv = T_InvPredictor(models); % learned model of the inverse of the gluing transformation
 x_pred = T_inv.predict(z); % estimate \hat x of the system state x

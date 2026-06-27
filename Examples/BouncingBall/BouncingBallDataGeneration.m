@@ -17,9 +17,9 @@ h = @(x, t) (x(1));
 
 % Create the associated BouncingBall object
 obs_sys = ObservedHybridSystem(sys, 1, h);
-nx = 25;
+
 % Define the z dynamic :  z' = Az + Bh(x)
-halfnz = 2;
+halfnz = 25;
 nz = 2 * halfnz;
 maxReal = 8;
 maxImag = 4;
@@ -52,3 +52,18 @@ data = aug_sys.generateData(Init_conditions, t_take, t_take + 15, 200, nInit, 0.
 today = string(datetime("today"));
 datas_filename = strcat('Data/raw-bouncing-ball-', today);
 save(datas_filename, "data", "A", "B")  % save labelled dataset and the corresponding z dynamic used to generate it
+
+%% Do PCA on dataset
+z = data(nx+1:nx+nz,:);
+m = mean(z, 1);
+cov = (z-m)*(z-m)';
+[U, S, V] = svd(cov);
+[coeff, score, latent, tsquared, explained] = pca(z);
+plot(1:nz, S);
+
+nz_embed = 6;
+
+P = U(:, 1:nz_embed)';
+
+A_svd = P*A*P';
+B_svd = P*B;
