@@ -108,7 +108,7 @@ classdef AugmentedSystem < HybridSystem
             assert(T_take < T_max, "T_take is greater than T_max")
             assert(size(InitConditions, 2) >= n_run, "Not enough initial condition for required number of runs")
             
-            if T_take >= 5/min(abs(real(eig(this.A))))
+            if T_take <= 5/min(abs(real(eig(this.A))))
                 warning('T_take (%.2f) may not be big enough compared to z dynamic : response time  = %.2f', T_take, 1/min(abs(real(eig(this.A)))))
             end
 
@@ -229,7 +229,7 @@ classdef AugmentedSystem < HybridSystem
             DataSet = reshape(permute(DataSet,[3, 1, 2]), this.state_dimension + 3, []); % replace both axis (points_per_run, n_run) into one single axis of size  (points_per_run * n_run)
         end
 
-        function DataSet = generateUnlabbelledData(this, InitConditions, T_take, T_max, points_per_run, n_run, max_dt_step)
+        function DataSet = generateUnlabbelledData(this, InitConditions, T_take, T_max, points_per_run, n_run, max_dt_step, skip_no_jump)
             %GENERATE DATA Method that generate a dataset of points and 
             %label them. 
             %   The points are randomly sampled alongside trajectories
@@ -242,14 +242,18 @@ classdef AugmentedSystem < HybridSystem
             %       - points_per_run : Number of points randomly sampled each run
             %       - n_run : Number of run
             %       - max_dt_steps : maximum length of a time step of the integration scheme, default 0.01
+            %       - skip_no_jump : boolean, whether to skip data points with no complete jump after T_take, default true
             %   OUTPUT :
             %      DataSet : (n_run, points_per_run, n_x + n_z + 3) array
 
-            
+            if ~(exist('skip_no_jump', 'var'))
+                skip_no_jump = true;
+            end
+
             assert(T_take < T_max, "T_take is greater than T_max")
             assert(size(InitConditions, 2) >= n_run, "Not enough initial condition for required number of runs")
             
-            if T_take >= 5/min(abs(real(eig(this.A))))
+            if T_take <= 5/min(abs(real(eig(this.A))))
                 warning('T_take (%.2f) may not be big enough compared to z dynamic : response time  = %.2f', T_take, 1/min(abs(real(eig(this.A)))))
             end
 
@@ -286,7 +290,11 @@ classdef AugmentedSystem < HybridSystem
                 if points_per_run > len_t 
                     warning('%s points are sampled but only %s points are present between %s s and %s s : repetitions are exeptionnaly authorized. Consider reducing max_dt_steps or augmenting T_max', points_per_run, len_t, T_take, T_max )
                 end
-
+                
+                if skip_no_jump && (sol.jump_count == 0 || sol.jump_times(sol.jump_count) < T_take)
+                    continue;
+                end
+                
                 DataSet_index = randsample(seed, tmin_ind:tmax_ind, points_per_run, points_per_run>len_t); % sample randomly the points
                 DataSet_index = sort(DataSet_index);
 

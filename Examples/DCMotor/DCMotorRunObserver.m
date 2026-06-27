@@ -18,27 +18,34 @@ loaded = load(strcat('Data/', files(idx).name));
 A = loaded.A;
 B = loaded.B;
 
-disp(A);
-disp(B);
-A = A(1:8, 1:8); % keep only the part of A corresponding to the omega dynamic
-B = B(1:8, 1); % keep only the part of B corresponding to the omega dynamic
-A(8,8 ) = -15;
+% disp(A);
+% disp(B);
+% A = A(1:8, 1:8); % keep only the part of A corresponding to the omega dynamic
+% B = B(1:8, 1); % keep only the part of B corresponding to the omega dynamic
+% A(8,8 ) = -15;
 
+eps = 2*pi/50;
+w_1 = 2*pi;
+w_2 = pi/3;
+w_3 = 5*pi;
+w_4 = pi;
+A = diag([-eps, -0.3*eps, -w_3, -w_2, -w_1, -w_4]);
+B = ones(6, 1);
 disp(A);
 disp(B);
 
 % Define the augmented system.
-aug_sys = AugmentedSystem(obs_sys, 8, A, B);
+aug_sys = AugmentedSystem(obs_sys, 6, A, B);
 
 % Choose an initial condition for the DC motor state and the observer state.
 u_0 = 0; % initial input
-u_dot_0 = 1; % initial input derivative
+u_dot_0 = 4; % initial input derivative
 U_pulsation = 0.6*pi; % pulsation of the input sine wave, we keep it constant for the test
-X0 = [-0.; 0; 0; 0; u_0; u_dot_0; 0.0616; 0.031; U_pulsation]; % initial state of the system, we start with q = 1 to see a mode transition in the trajectory
+X0 = [-0.; 0; 0; 0; u_0; u_dot_0; 0.0816*pi/180; 0.021*pi/180; U_pulsation]; % initial state of the system, we start with q = 1 to see a mode transition in the trajectory
 Z0 = zeros(aug_sys.nz, 1);
 
 % Time spans.
-tspan = [0, 30];
+tspan = [0, 50];
 jspan = [0, 200];
 
 % Solver options.
@@ -76,7 +83,7 @@ N_0 = M_0*G;
 disp(size(M_0));
 disp(size(N_0));
 
-ampl = u_dot_0^2+u_0^2; % amplitude of the input sine wave
+ampl = sqrt((u_dot_0/U_pulsation)^2+u_0^2); % amplitude of the input sine wave
 w = ampl/(lambda^2+U_pulsation^2)*(lambda*cos(U_pulsation*t)-U_pulsation*sin(U_pulsation*t)); 
 disp(size(w));
 
@@ -84,7 +91,7 @@ T_0 = M_0*x(:,1:3)' + N_0*w';
 T_1 = M_1*x(:,1:3)' + N_1*w' + B_1; 
 T__1 = M_1*x(:,1:3)' + N_1*w' + B__1; 
 
-figure;
+figure(3);
 plot(t, z);
 title('Observer trajectory in z-coordinates', 'Interpreter', 'latex');
 legend(arrayfun(@(k) ['$z_{' num2str(k) '}$'], 1:aug_sys.nz, 'UniformOutput', false), 'Interpreter', 'latex');

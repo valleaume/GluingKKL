@@ -17,11 +17,11 @@ data = data_obj.data;
 disp(A);
 disp(B);
 
-A = A(1:8, 1:8); % keep only the part of A corresponding to the omega dynamic
-B = B(1:8, 1); % keep only the part of B corresponding to the omega dynamic
+%A = A(1:8, 1:8); % keep only the part of A corresponding to the omega dynamic
+%B = B(1:8, 1); % keep only the part of B corresponding to the omega dynamic
 
-disp(A);
-disp(B);
+%disp(A);
+%disp(B);
 
 
 figure(1);
@@ -39,8 +39,9 @@ sys = DCMotorHybridSystemClass();
 h = @(x, t) x(2);
 obs_sys = ObservedHybridSystem(sys, 1, h);
 
+n_z = size(A, 1); % dimension of the z dynamic
 % Define the AugmentedSystem with the same z dynamic
-aug_sys = AugmentedSystem(obs_sys, 8, A, B);
+aug_sys = AugmentedSystem(obs_sys, n_z, A, B);
 
 % Extract z and x components from the dataset.
 X = data(aug_sys.nx + 1 : aug_sys.nx + aug_sys.nz, :)';
@@ -63,7 +64,7 @@ X = X(valid, :);
 Y = Y(valid, :);
 
 % Split into training and test sets.
-cv = cvpartition(size(Y, 1), 'HoldOut', 0.8);
+cv = cvpartition(size(Y, 1), 'HoldOut', 0.2);
 X_train = X(training(cv), :);
 Y_train = Y(training(cv), :);
 X_test = X(test(cv), :);
