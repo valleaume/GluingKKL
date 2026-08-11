@@ -29,6 +29,27 @@ A = diag([-eps, -0.3*eps, -w_3, -w_2, -w_1, -w_4, -w_5]);
 B = ones(7, 1);
 %B(2) = 0;
 %B(4) = 0;
+%% DCMotorDataGeneration.m
+% Generate datasets for a DC motor with Coulomb friction using the
+% "Gluing" methodology and the HybridSubsystem framework.
+%
+% This script performs the following high-level steps:
+%  1. Create a DC motor hybrid system object.
+%  2. Define an observation map y = h(x,t) for the measured signals.
+%  3. Build an augmented linear dynamic (z) driven by the observed outputs.
+%  4. Generate many random initial conditions and simulate the augmented
+%     system long enough for the z-dynamics to reach stationarity.
+%  5. Save full and PCA-reduced datasets for later predictor training.
+%
+% Notes / variables:
+%  - `obs_sys` : observed hybrid system wrapping the true dynamics `sys`.
+%  - `A`, `B`   : matrices for the z-dynamics (continuous linear dynamics).
+%  - `nz`, `ny` : number of z-states per observed output and number of outputs.
+%  - `aug_sys`  : AugmentedSystem that couples the observed system and z-dynamics.
+%  - `generateUnlabbelledData` is used to collect (x,z) trajectories; the
+%    function name contains the existing spelling used in the toolbox.
+
+% Add utility paths used by the examples and toolbox
 %B = kron(eye(4), B); % take a block diagonal of B
 disp(A);
 disp(B);
