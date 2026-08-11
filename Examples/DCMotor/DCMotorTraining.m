@@ -39,10 +39,12 @@ title('Distribution of the u  ', 'Interpreter', 'latex');
 sys = DCMotorHybridSystemClass();
 
 % Define the observation function y = h(x, t)
-h = @(x, t) x(2);
-obs_sys = ObservedHybridSystem(sys, 1, h);
+h = @(x, t) [x(2), x(1)];
+ny = 2;
+obs_sys = ObservedHybridSystem(sys, ny, h);
 
 n_z = size(A, 1); % dimension of the z dynamic
+%n_z = 11;
 % Define the AugmentedSystem with the same z dynamic
 aug_sys = AugmentedSystem(obs_sys, n_z, A, B);
 
@@ -62,40 +64,41 @@ Y = cat(2, State, Friction_coef); % we want to predict the current, angular velo
 % Remove NaN rows if present.
 valid = all(~isnan(X), 2) & all(~isnan(Y), 2);
 fprintf( '%.0f nan over %.0f data points \n',sum(~valid), length(valid));
+n_plot = 10000;
 
 X = X(valid, :);
 Y = Y(valid, :);
 
-subplot(1, 3, 3);
-histogram(U_input(valid, 1), 100);  
-title('Distribution of the input  , after Nan', 'Interpreter', 'latex');
+% subplot(1, 3, 3);
+% histogram(U_input(valid(1:n_plot), 1), 100);  
+% title('Distribution of the input  , after Nan', 'Interpreter', 'latex');
 
-figure(2);
-subplot(1, 2, 1);
-histogram(data(1, :), 100);
-title('Distribution of the current $i$  ', 'Interpreter', 'latex'); 
+% figure(2);
+% subplot(1, 2, 1);
+% histogram(data(1, :), 100);
+% title('Distribution of the current $i$  ', 'Interpreter', 'latex'); 
 
-subplot(1, 2, 2);
-histogram(Y(:, 1), 100);  
-title('Distribution of the current $i$  , after NaN removal', 'Interpreter', 'latex'); 
+% subplot(1, 2, 2);
+% histogram(Y(:, 1), 100);  
+% title('Distribution of the current $i$  , after NaN removal', 'Interpreter', 'latex'); 
 
-figure(3);
-subplot(1, 2, 1);
-histogram(data(2, :), 100);
-title('Distribution of the angular velocity $\omega$  ', 'Interpreter', 'latex'); 
+% figure(3);
+% subplot(1, 2, 1);
+% histogram(data(2, :), 100);
+% title('Distribution of the angular velocity $\omega$  ', 'Interpreter', 'latex'); 
 
-subplot(1, 2, 2);
-histogram(Y(:, 2), 100);  
-title('Distribution of the angular velocity $\omega$  , after NaN removal', 'Interpreter', 'latex'); 
+% subplot(1, 2, 2);
+% histogram(Y(:, 2), 100);  
+% title('Distribution of the angular velocity $\omega$  , after NaN removal', 'Interpreter', 'latex'); 
 
-figure(4);
-subplot(1, 2, 1);
-histogram(data(3, :), 100);
-title('Distribution of the rotor angle $\theta$  ', 'Interpreter', 'latex'); 
+% figure(4);
+% subplot(1, 2, 1);
+% histogram(data(3, :), 100);
+% title('Distribution of the rotor angle $\theta$  ', 'Interpreter', 'latex'); 
 
-subplot(1, 2, 2);
-histogram(Y(:, 3), 100);  
-title('Distribution of the rotor angle $\theta$  , after NaN removal', 'Interpreter', 'latex'); 
+% subplot(1, 2, 2);
+% histogram(Y(:, 3), 100);  
+% title('Distribution of the rotor angle $\theta$  , after NaN removal', 'Interpreter', 'latex'); 
 
 % Split into training and test sets.
 cv = cvpartition(size(Y, 1), 'HoldOut', 0.3);
@@ -111,12 +114,12 @@ X_test = (X_test - mu) ./ sigma;
 
 % Regression network from z to x.
 layers = [
-    featureInputLayer(10) % we also input u and u_dot to the predictor
-    fullyConnectedLayer(100)
+    featureInputLayer(n_z+3) % we also input u and u_dot to the predictor
+    fullyConnectedLayer(128)
     tanhLayer
-    fullyConnectedLayer(100)
+    fullyConnectedLayer(64)
     tanhLayer
-    fullyConnectedLayer(100)
+    fullyConnectedLayer(64)
     tanhLayer
     fullyConnectedLayer(2)
     regressionLayer];
@@ -133,7 +136,7 @@ options = trainingOptions('adam', ...
     'L2Regularization', 1e-5, ...
     'Plots', 'training-progress');
 
-
+disp("start training")
 mdl_p = trainNetwork(X_train, Y_train(:, 4:5), layers, options);
 
 Y_pred = predict(mdl_p, X_test);
@@ -147,12 +150,12 @@ save(model_filename, 'mdl_p', 'mu', 'sigma', 'A', 'B', 'dataset_name');
 
 % Regression network from z to x.
 layers = [
-    featureInputLayer(10) % we also input u and u_dot to the predictor
-    fullyConnectedLayer(100)
+    featureInputLayer(n_z+3) % we also input u and u_dot to the predictor
+    fullyConnectedLayer(128)
     tanhLayer
-    fullyConnectedLayer(100)
+    fullyConnectedLayer(64)
     tanhLayer
-    fullyConnectedLayer(100)
+    fullyConnectedLayer(64)
     tanhLayer
     fullyConnectedLayer(3)
     regressionLayer];

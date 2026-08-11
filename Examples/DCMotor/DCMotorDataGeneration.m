@@ -9,11 +9,12 @@ addpath('utils', 'Examples/DCMotor');
 sys = DCMotorHybridSystemSineClass();
 
 % Define the observation function y = h(x, t)
-%h = @(x, t) [x(2), x(3), x(5), x(6)]; % observe, angular velocity, rotor angle and input
-h = @(x, t) [x(2)]; % observe angular velocity
+h = @(x, t) [x(2), x(3), x(5), x(6)]; % observe, angular velocity, rotor angle and input
+%h = @(x, t) [x(2), x(1)]; % observe angular velocity
+ny = 4;
 
 % Create the observed system
-obs_sys = ObservedHybridSystem(sys, 4, h);
+obs_sys = ObservedHybridSystem(sys, ny, h);
 
 % Define the z dynamic: z' = Az + Bh(x)
 eps = 2*pi/50;
@@ -31,7 +32,27 @@ B = ones(7, 1);
 %B = kron(eye(4), B); % take a block diagonal of B
 disp(A);
 disp(B);
-aug_sys = AugmentedSystem(obs_sys, 7, A, B);
+
+% Define the z dynamic :  z' = Az + Bh(x)
+halfnz = 35;
+nz = 2 * halfnz;
+maxReal = 10;
+maxImag = 4;
+realParts = -maxReal * rand(halfnz, 1);
+imagParts = maxImag * (rand(halfnz, 1) - 1/2) * 2;
+poles = [realParts + 1i * imagParts; realParts - 1i * imagParts];
+plot(real(poles), imag(poles), 'o')
+
+A = [realParts(1), -imagParts(1); imagParts(1), realParts(1)];
+for k = 2:halfnz
+    A = [A zeros(2 * (k-1), 2);zeros(2, 2* (k-1)) [realParts(k), -imagParts(k);imagParts(k), realParts(k)]];
+end
+
+B = kron(eye(ny), ones(nz, 1));
+A = kron(eye(ny), A);
+
+
+aug_sys = AugmentedSystem(obs_sys, ny*nz, A, B);
 
 %% Generate a labeled dataset of (x, z) pairs
 
@@ -70,7 +91,7 @@ Init_Conditions = Init_Conditions(:, Init_Conditions(7, :) > Init_Conditions(8, 
 t_take = 5/min(abs(real(eig(A)))) + 0.1;
 
 disp('Generating dataset... This may take a few minutes.');
-data = aug_sys.generateUnlabbelledData(Init_Conditions, t_take, t_take + 45, 300, 7000, 0.1);
+data = aug_sys.generateUnlabbelledData(Init_Conditions, t_take, t_take + 45, 70, 700, 0.1);
 disp(size(data));
 
 %% Save dataset
@@ -78,3 +99,35 @@ disp(size(data));
 today = string(datetime("today"));
 datas_filename = strcat('Data/raw-dc-motor-full-', today);
 save(datas_filename, "data", "A", "B");
+
+%% Do PCA on dataset
+nx = aug_sys.nx;
+z = data(aug_sys.nx+1:nx+aug_sys.nz,:);
+z(:, any(isnan(z), 1)) = [];
+m = mean(z, 1);
+cov = (z-m)*(z-m)';
+[U, S, V] = svd(cov);
+[coeff, score, latent, tsquared, explained] = pca(z);
+
+disp(explained);
+[r_, index] = max(cumsum(explained)>0.95);
+disp(index)
+nz_embed = index;
+
+P = U(:, 1:nz_embed)';
+
+A_svd = P*A*P';
+B_svd = P*B;
+
+aug_sys_svd = AugmentedSystem(obs_sys, nz_embed, A_svd, B_svd);
+data = aug_sys_svd.generateUnlabbelledData(Init_Conditions, t_take, t_take + 45, 400, 7000, 0.1);
+disp(size(data));
+
+%% Save dataset
+A = A_svd;
+B = B_svd;
+
+today = string(datetime("today"));
+datas_filename = strcat('Data/raw-dc-motor-svd-', today);
+save(datas_filename, "data", "A", "B");
+
